@@ -1,0 +1,13 @@
+﻿python : 2026-07-01 11:12:50.460 Uvicorn server started on 0.0.0.0:8502
+At line:1 char:32
++ ... NG="utf-8"; python -m streamlit run frontend/app.py --server.port 850 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (2026-07-01 11:1...on 0.0.0.0:8502:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8502
+  Network URL: http://192.168.0.153:8502
+
