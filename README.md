@@ -1,4 +1,4 @@
-# FinAssist AI 💰
+# FinAssist AI 
 
 **Intelligent Indian Tax Planning Assistant — FY 2025-26**
 
