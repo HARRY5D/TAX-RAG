@@ -9,44 +9,102 @@ import streamlit as st
 from frontend.components.cards import source_citation_card
 
 
+def _extract_result(result: dict) -> tuple:
+    """
+    Safely extract (answer, citations, steps) from a run_query() result.
+    run_query() always returns a plain dict (model_dump'd), so all values
+    including rag_context are plain dicts — no Pydantic objects.
+    """
+    answer = result.get("final_answer") or "I couldn't generate a response."
+
+    rag_ctx = result.get("rag_context") or {}
+    if isinstance(rag_ctx, dict):
+        citations = rag_ctx.get("citations", "")
+    elif hasattr(rag_ctx, "citations"):   # safety net for Pydantic object
+        citations = rag_ctx.citations or ""
+    else:
+        citations = ""
+
+    steps = result.get("processing_steps") or []
+    return answer, citations, steps
+
+
+def _run_query_and_store(user_query: str, mode: str):
+    """Run the LangGraph query and append the assistant reply to session messages."""
+    with st.spinner(" Analyzing your question..."):
+        try:
+            from recommendation_engine.graph import run_query
+
+            form16_path = (
+                st.session_state.form16_path
+                if mode == " Document Mode (Form16)"
+                else None
+            )
+
+            result = run_query(
+                user_query=user_query,
+                mode="document" if form16_path else "chat",
+                form16_path=form16_path,
+            )
+
+            answer, citations, steps = _extract_result(result)
+
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": answer,
+                "citations": citations,
+                "steps": steps,
+            })
+
+        except Exception as e:
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": f" **Error:** {str(e)}\n\nIf it's a retrieval error, ensure the RAG index is built:\n```\npython scripts/build_index.py\n```",
+                "citations": "",
+                "steps": [],
+            })
+
+
 def show_tax_assistant():
-    st.markdown('<p class="section-header">💬 Tax Assistant</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header"> Tax Assistant</p>', unsafe_allow_html=True)
     st.markdown('<p class="section-sub">Ask anything about Indian taxes — backed by legal documents & AI</p>', unsafe_allow_html=True)
 
-    # Initialize session state
+    #  Session state init 
     if "messages" not in st.session_state:
         st.session_state.messages = []
     if "form16_path" not in st.session_state:
         st.session_state.form16_path = None
-    if "form16_data" not in st.session_state:
-        st.session_state.form16_data = None
+    if "pending_query" not in st.session_state:
+        st.session_state.pending_query = None   # for suggestion button flow
 
-    # ─── Mode selector + optional Form16 upload ────────────────────────────────
+    #  Mode selector + Form16 upload 
     col1, col2 = st.columns([2, 1])
     with col1:
         mode = st.radio(
             "Mode",
-            options=["💬 Chat Mode", "📄 Document Mode (Form16)"],
+            options=[" Chat Mode", " Document Mode (Form16)"],
             horizontal=True,
             help="Chat Mode: ask any question. Document Mode: upload Form16 for personalized analysis.",
+            key="mode_selector",
         )
 
     with col2:
-        if mode == "📄 Document Mode (Form16)":
+        if mode == " Document Mode (Form16)":
             uploaded = st.file_uploader("Upload Form 16 PDF", type=["pdf"], key="form16_upload")
             if uploaded:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
                     tmp.write(uploaded.read())
                     st.session_state.form16_path = tmp.name
-                st.success("✅ Form 16 uploaded!")
+                st.success(" Form 16 uploaded!")
         else:
             st.session_state.form16_path = None
 
     st.divider()
 
-    # ─── Suggested questions ───────────────────────────────────────────────────
-    if not st.session_state.messages:
-        st.markdown("**💡 Try asking:**")
+    #  Suggestion buttons 
+    # Only show when chat is empty AND no pending query
+    if not st.session_state.messages and st.session_state.pending_query is None:
+        st.markdown("** Try asking:**")
         suggestions = [
             "I earn ₹12 lakh. Which tax regime should I choose?",
             "Can I claim both HRA and home loan deductions?",
@@ -58,12 +116,20 @@ def show_tax_assistant():
         for i, (col, s) in enumerate(zip(cols, suggestions)):
             with col:
                 if st.button(s, key=f"sugg_{i}", use_container_width=True):
+                    # Store as pending query so we can process it after rerun
                     st.session_state.messages.append({"role": "user", "content": s})
+                    st.session_state.pending_query = s
                     st.rerun()
-
         st.markdown("")
 
-    # ─── Chat History ──────────────────────────────────────────────────────────
+    #  Process pending query (from suggestion button) 
+    if st.session_state.pending_query is not None:
+        query = st.session_state.pending_query
+        st.session_state.pending_query = None   # clear BEFORE calling so no loop
+        _run_query_and_store(query, mode)
+        st.rerun()
+
+    #  Chat history display 
     for msg in st.session_state.messages:
         if msg["role"] == "user":
             st.markdown(f"""
@@ -80,60 +146,32 @@ def show_tax_assistant():
             </div>
             """, unsafe_allow_html=True)
 
-            # Show citations if available
-            if "citations" in msg and msg["citations"]:
-                with st.expander("📚 Sources", expanded=False):
-                    for cite in msg["citations"].split("\n"):
+            # Citations expander
+            citations = msg.get("citations", "")
+            if citations:
+                with st.expander(" Sources", expanded=False):
+                    for cite in citations.split("\n"):
                         if cite.strip():
                             st.markdown(f"- {cite.strip()}")
 
-    # ─── Chat Input ────────────────────────────────────────────────────────────
+            # Processing steps (debug info)
+            steps = msg.get("steps", [])
+            if steps:
+                with st.expander(" Processing steps", expanded=False):
+                    st.markdown(" → ".join(steps))
+
+    #  Chat input (typed queries) 
     user_input = st.chat_input("Ask a tax question...", key="chat_input")
 
     if user_input:
         st.session_state.messages.append({"role": "user", "content": user_input})
-
-        with st.spinner("🔍 Analyzing..."):
-            try:
-                from recommendation_engine.graph import run_query
-
-                form16_path = st.session_state.form16_path if mode == "📄 Document Mode (Form16)" else None
-
-                result = run_query(
-                    user_query=user_input,
-                    mode="document" if form16_path else "chat",
-                    form16_path=form16_path,
-                )
-
-                # Handle both dict and Pydantic state
-                if isinstance(result, dict):
-                    answer = result.get("final_answer", "I couldn't generate a response.")
-                    citations = result.get("rag_context", {}).get("citations", "") if result.get("rag_context") else ""
-                    steps = result.get("processing_steps", [])
-                else:
-                    answer = result.final_answer or "I couldn't generate a response."
-                    citations = result.rag_context.citations if result.rag_context else ""
-                    steps = result.processing_steps
-
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": answer,
-                    "citations": citations,
-                    "steps": steps,
-                })
-
-            except Exception as e:
-                error_msg = f"❌ Error: {str(e)}\n\nPlease ensure the RAG index is built: `python scripts/build_index.py`"
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": error_msg,
-                    "citations": "",
-                })
-
+        _run_query_and_store(user_input, mode)
         st.rerun()
 
-    # ─── Clear chat button ─────────────────────────────────────────────────────
+    #  Clear chat 
     if st.session_state.messages:
-        if st.button("🗑️ Clear Conversation", key="clear_chat"):
+        st.markdown("---")
+        if st.button(" Clear Conversation", key="clear_chat"):
             st.session_state.messages = []
+            st.session_state.pending_query = None
             st.rerun()

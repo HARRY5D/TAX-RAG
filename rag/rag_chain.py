@@ -1,12 +1,12 @@
 """
 RAG Chain — Retrieval-augmented generation pipeline.
-Integrates HybridRetriever + BGEReranker + Gemini (via native google-genai + LangSmith wrap_gemini).
-LangSmith tracing is automatic via wrap_gemini.
+Integrates HybridRetriever + BGEReranker + local Ollama LLM.
+LangSmith tracing is automatic via LANGCHAIN_TRACING_V2 env var (ChatOllama is a LangChain object).
 """
 from typing import List, Dict, Any
 
-from google import genai as _genai
-from langsmith import wrappers as _ls_wrappers
+from langchain_ollama import ChatOllama
+from langchain_core.messages import SystemMessage, HumanMessage
 
 from rag.retriever import HybridRetriever
 from rag.reranker import BGEReranker
@@ -15,13 +15,20 @@ from config.settings import settings
 
 TAX_SYSTEM_PROMPT = """You are FinAssist AI, an expert Indian tax advisor specializing in FY 2025-26 taxation.
 
-CRITICAL RULES:
-1. NEVER perform tax calculations yourself. Always state numbers from the context or say "use the Tax Calculator".
-2. Always cite the source section/document when providing legal information.
-3. Be specific about FY 2025-26 / AY 2026-27 rules.
-4. Clearly distinguish between Old and New Tax Regime rules.
-5. If unsure, say so - never hallucinate tax rules.
-6. Keep answers clear, structured, and actionable.
+CRITICAL ANTI-HALLUCINATION RULES:
+1. NEVER perform tax calculations yourself. If tax figures are not provided in context, direct the user to use the Tax Calculator.
+2. DO NOT explain or break down calculations (tax slabs, bracket math, deduction arithmetic) unless the exact breakdown is in RETRIEVED LEGAL CONTEXT.
+3. If RETRIEVED LEGAL CONTEXT is empty or irrelevant, do not speculate. Recommend the calculator or a professional.
+4. NEVER invent or assume tax rates, slabs, limits, exemptions, or section numbers not in RETRIEVED LEGAL CONTEXT.
+5. Cite section numbers ONLY if they appear in SOURCE CITATIONS below. Do NOT invent section references.
+6. FREELANCER RULE: Never cite Section 194-I for freelancers (that is TDS on Rent).
+   Freelancer income = Section 28 | Freelancer TDS = Section 194J | Presumptive tax = Section 44ADA.
+7. REGIME RULE: If the user has specified old regime or new regime, present ONLY that regime's numbers.
+8. CRYPTO / VDA RULE: Cryptocurrency, Bitcoin, Ethereum, NFTs and all Virtual Digital Assets (VDA) are taxed
+   EXCLUSIVELY under Section 115BBH at a FLAT 30% + 4% cess = 31.2%. NEVER apply Section 44ADA
+   (presumptive taxation) to crypto income. NEVER apply the Section 87A rebate to VDA gains — it does
+   NOT apply to special-rate income under Section 115BBH. Only cost of acquisition is deductible.
+   VDA losses cannot be set off against other VDA gains or any other income.
 
 RETRIEVED LEGAL CONTEXT:
 {context}
@@ -55,7 +62,7 @@ def format_context(docs: List[Dict[str, Any]]) -> tuple[str, str]:
 class RAGChain:
     """
     Full RAG pipeline:
-    Query -> Hybrid Retrieval -> Reranking -> Prompt -> Gemini (traced) -> Answer
+    Query -> Hybrid Retrieval -> Reranking -> Prompt -> Ollama LLM (traced) -> Answer
     """
 
     def __init__(
@@ -70,44 +77,31 @@ class RAGChain:
         self.top_k_retrieve = top_k_retrieve
         self.top_k_rerank = top_k_rerank
 
-        # Initialize native google-genai client with LangSmith wrap_gemini tracing
-        try:
-            raw_client = _genai.Client(api_key=settings.gemini_api_key)
-            self._client = _ls_wrappers.wrap_gemini(
-                raw_client,
-                tracing_extra={
-                    "tags": ["gemini", "finassist-ai", "rag-chain"],
-                    "metadata": {"project": settings.langsmith_project},
-                },
-            )
-        except Exception:
-            self._client = _genai.Client(api_key=settings.gemini_api_key)
+        # Initialize Ollama LLM — LangSmith traces automatically
+        self._llm = ChatOllama(
+            model=settings.ollama_model,
+            base_url=settings.ollama_base_url,
+            temperature=settings.llm_temperature,
+        )
+        self._fallback_llm = ChatOllama(
+            model=settings.ollama_fallback_model,
+            base_url=settings.ollama_base_url,
+            temperature=settings.llm_temperature,
+        )
 
-    def _call_gemini(self, prompt: str, retries: int = 3) -> str:
-        """Call Gemini with automatic retry on 503/429 and model fallback."""
-        import time
-        models_to_try = [settings.llm_model, "gemini-2.0-flash", "gemini-2.0-flash-lite"]
-        last_error = None
-
-        for model in models_to_try:
-            for attempt in range(retries):
-                try:
-                    resp = self._client.models.generate_content(
-                        model=model,
-                        contents=prompt,
-                    )
-                    return resp.text or ""
-                except Exception as e:
-                    last_error = e
-                    err_str = str(e)
-                    if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str or "EXHAUSTED" in err_str:
-                        wait = 2 ** attempt  # 1s, 2s, 4s
-                        time.sleep(wait)
-                        continue
-                    else:
-                        break  # try next model
-
-        return f"[Gemini unavailable: {last_error}. Please try again in a moment.]"
+    def _call_llm(self, system_prompt: str, user_question: str) -> str:
+        """Call Ollama LLM with system + user message. Falls back to secondary model."""
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_question),
+        ]
+        for llm in [self._llm, self._fallback_llm]:
+            try:
+                response = llm.invoke(messages)
+                return response.content or ""
+            except Exception:
+                continue
+        return "[LLM unavailable. Is Ollama running? Run: ollama serve]"
 
     def query(self, question: str) -> Dict[str, Any]:
         """
@@ -120,11 +114,10 @@ class RAGChain:
         context, citations = format_context(reranked)
 
         # Build prompt
-        prompt = TAX_SYSTEM_PROMPT.format(context=context, citations=citations)
-        prompt += f"\n\nUser question: {question}"
+        system_prompt = TAX_SYSTEM_PROMPT.format(context=context, citations=citations)
 
-        # Call Gemini with LangSmith tracing
-        answer = self._call_gemini(prompt)
+        # Call local LLM with LangSmith tracing
+        answer = self._call_llm(system_prompt, question)
 
         return {
             "question": question,
@@ -134,18 +127,18 @@ class RAGChain:
         }
 
     def query_stream(self, question: str):
-        """Stream the Gemini response token by token (for Streamlit st.write_stream)."""
+        """Stream the Ollama response token by token (for Streamlit st.write_stream)."""
         candidates = self.retriever.retrieve(question, top_k=self.top_k_retrieve)
         reranked = self.reranker.rerank(question, candidates, top_k=self.top_k_rerank)
         context, citations = format_context(reranked)
 
-        prompt = TAX_SYSTEM_PROMPT.format(context=context, citations=citations)
-        prompt += f"\n\nUser question: {question}"
+        system_prompt = TAX_SYSTEM_PROMPT.format(context=context, citations=citations)
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=question),
+        ]
 
-        # Stream via native SDK
-        for chunk in self._client.models.generate_content_stream(
-            model=settings.llm_model,
-            contents=prompt,
-        ):
-            if chunk.text:
-                yield chunk.text
+        # Stream via ChatOllama
+        for chunk in self._llm.stream(messages):
+            if chunk.content:
+                yield chunk.content

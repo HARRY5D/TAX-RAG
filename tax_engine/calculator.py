@@ -14,6 +14,7 @@ from tax_engine.deductions import (
 )
 from tax_engine.nps import calculate_nps_deductions
 from tax_engine.home_loan import calculate_home_loan_deductions
+from tax_engine.rental import calculate_house_property_income
 
 
 def calculate_full_tax(profile: dict) -> dict:
@@ -53,6 +54,12 @@ def calculate_full_tax(profile: dict) -> dict:
 
         savings_interest      : 80TTA
         other_income          : Other income sources
+
+        # Rental / House Property income (Section 22-27)
+        annual_rent           : Gross annual rent received (Rs.). 0 = no rental income
+        municipal_taxes_paid  : Municipal taxes paid by owner (Rs.)
+        is_let_out            : True = property rented out (default), False = self-occupied
+        home_loan_interest_let_out : Home loan interest for let-out property (no cap)
     """
     g = profile
 
@@ -111,32 +118,79 @@ def calculate_full_tax(profile: dict) -> dict:
     # ─── 80TTA ─────────────────────────────────────────────────────────────────
     tta_result = calculate_80tta_deduction(float(g.get("savings_interest", 0)))
 
+    # --- Rental / House Property Income (Sections 22-27) ---
+    annual_rent = float(g.get("annual_rent", 0))
+    municipal_taxes_paid = float(g.get("municipal_taxes_paid", 0))
+    is_let_out = bool(g.get("is_let_out", annual_rent > 0))  # auto-detect if rent provided
+    is_self_occupied_hp = not is_let_out
+    # For let-out: interest from home_loan_interest or home_loan_interest_let_out
+    hl_interest_let_out = float(g.get("home_loan_interest_let_out",
+                                      g.get("home_loan_interest", 0) if is_let_out else 0))
+
+    hp_result = calculate_house_property_income(
+        annual_rent=annual_rent,
+        municipal_taxes_paid=municipal_taxes_paid,
+        home_loan_interest=hl_interest_let_out,
+        is_let_out=is_let_out,
+        is_self_occupied=is_self_occupied_hp,
+    )
+
+    # --- Presumptive Tax adjustments (Section 44ADA for Freelancers) ---
+    is_freelancer = bool(g.get("is_freelancer", False))
+    
     # ════════════════════════════════════════════════════════════════════════════
     #  OLD REGIME
     # ════════════════════════════════════════════════════════════════════════════
-    old_gross_income = gross_salary + other_income
-    old_deductions = (
-        STANDARD_DEDUCTION_OLD
-        + hra_exemption
-        + c80_result["deduction_allowed"]
-        + d80_result["total_deduction"]
-        + nps_result["sec_80ccd1b"]["deduction"]
-        + nps_result["sec_80ccd2"]["deduction"]
-        + hl_result["sec_24b"]["deduction"]
-        + hl_result["sec_80eea"]["deduction"]
-        + tta_result["deduction_allowed"]
-    )
+    if is_freelancer:
+        # For a freelancer, presumptive income under Sec 44ADA is 50% of gross receipts.
+        # No standard deduction (Rs.50k) or HRA exemption is allowed.
+        presumptive_profit = gross_salary * 0.5
+        old_gross_income = presumptive_profit + other_income + hp_result["hp_income_to_add"]
+        old_deductions = (
+            c80_result["deduction_allowed"]
+            + d80_result["total_deduction"]
+            + nps_result["sec_80ccd1b"]["deduction"]
+            + hl_result["sec_24b"]["deduction"]
+            + hl_result["sec_80eea"]["deduction"]
+            + tta_result["deduction_allowed"]
+            + hp_result["hp_loss_to_deduct"]   # HP loss set-off (max Rs.2L)
+        )
+    else:
+        old_gross_income = gross_salary + other_income + hp_result["hp_income_to_add"]
+        old_deductions = (
+            STANDARD_DEDUCTION_OLD
+            + hra_exemption
+            + c80_result["deduction_allowed"]
+            + d80_result["total_deduction"]
+            + nps_result["sec_80ccd1b"]["deduction"]
+            + nps_result["sec_80ccd2"]["deduction"]
+            + hl_result["sec_24b"]["deduction"]
+            + hl_result["sec_80eea"]["deduction"]
+            + tta_result["deduction_allowed"]
+            + hp_result["hp_loss_to_deduct"]   # HP loss set-off (max Rs.2L)
+        )
+        
     old_taxable = max(0.0, old_gross_income - old_deductions)
     old_tax_result = calculate_old_regime_tax(old_taxable)
 
     # ════════════════════════════════════════════════════════════════════════════
     #  NEW REGIME (most deductions not allowed, only standard deduction + 80CCD2)
     # ════════════════════════════════════════════════════════════════════════════
-    new_gross_income = gross_salary + other_income
-    new_deductions = (
-        STANDARD_DEDUCTION_NEW
-        + nps_result["sec_80ccd2"]["deduction"]   # Only employer NPS allowed
-    )
+    if is_freelancer:
+        # Under New Regime, presumptive profit is 50% of gross receipts.
+        # Standard deduction (Rs.75k) and Chapter VI-A deductions are entirely blocked.
+        # However, Section 24(b) interest for let-out IS allowed (income computation, not VI-A)
+        presumptive_profit = gross_salary * 0.5
+        new_gross_income = presumptive_profit + other_income + hp_result["hp_income_to_add"]
+        new_deductions = hp_result["hp_loss_to_deduct"]  # HP loss set-off allowed under both regimes
+    else:
+        new_gross_income = gross_salary + other_income + hp_result["hp_income_to_add"]
+        new_deductions = (
+            STANDARD_DEDUCTION_NEW
+            + nps_result["sec_80ccd2"]["deduction"]   # Only employer NPS allowed
+            + hp_result["hp_loss_to_deduct"]           # HP loss set-off (max Rs.2L)
+        )
+        
     new_taxable = max(0.0, new_gross_income - new_deductions)
     new_tax_result = calculate_new_regime_tax(new_taxable)
 
@@ -195,6 +249,7 @@ def calculate_full_tax(profile: dict) -> dict:
             "sec_80d": d80_result,
             "nps": nps_result,
             "home_loan": hl_result,
+            "house_property": hp_result,
             "sec_80tta": tta_result,
         },
     }

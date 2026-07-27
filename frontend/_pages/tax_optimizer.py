@@ -7,16 +7,16 @@ from frontend.components.cards import metric_card, priority_badge
 
 
 def show_tax_optimizer():
-    st.markdown('<p class="section-header">📈 Tax Optimizer</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header"> Tax Optimizer</p>', unsafe_allow_html=True)
     st.markdown('<p class="section-sub">Discover missed deductions and maximize your tax savings</p>', unsafe_allow_html=True)
 
     # Check if tax calculation was done first
     has_profile = "last_tax_profile" in st.session_state and "last_tax_result" in st.session_state
 
     if has_profile:
-        st.info("✅ Using profile from Tax Calculator. You can also enter values below to analyze a different scenario.")
+        st.info(" Using profile from Tax Calculator. You can also enter values below to analyze a different scenario.")
 
-    with st.expander("📝 Enter Profile for Optimization", expanded=not has_profile):
+    with st.expander(" Enter Profile for Optimization", expanded=not has_profile):
         col1, col2, col3 = st.columns(3)
         with col1:
             gross_salary = st.number_input("Gross Salary (₹)", min_value=0,
@@ -46,7 +46,7 @@ def show_tax_optimizer():
         with col3:
             parent_senior = st.checkbox("Parents age 60+?", value=False, key="opt_parent_senior")
 
-        analyze_btn = st.button("🔍 Analyze Optimization Opportunities", key="opt_analyze", use_container_width=True)
+        analyze_btn = st.button(" Analyze Optimization Opportunities", key="opt_analyze", use_container_width=True)
 
     if analyze_btn or has_profile:
         profile = st.session_state.get("last_tax_profile", {
@@ -78,29 +78,29 @@ def show_tax_optimizer():
         col1, col2, col3 = st.columns(3)
         with col1:
             old_tax = st.session_state["last_tax_result"]["old_regime"]["total_tax"]
-            metric_card("Current Old Regime Tax", f"₹{old_tax:,.0f}", "", "#FF6B6B", "🏛️")
+            metric_card("Current Old Regime Tax", f"₹{old_tax:,.0f}", "", "#FF6B6B", "")
         with col2:
             new_tax = st.session_state["last_tax_result"]["new_regime"]["total_tax"]
-            metric_card("Current New Regime Tax", f"₹{new_tax:,.0f}", "", "#4ECDC4", "✨")
+            metric_card("Current New Regime Tax", f"₹{new_tax:,.0f}", "", "#4ECDC4", "")
         with col3:
             pot_savings = opt_result["total_potential_additional_savings"]
-            metric_card("Additional Savings Possible", f"₹{pot_savings:,.0f}", "Under Old Regime", "#FFD700", "💰")
+            metric_card("Additional Savings Possible", f"₹{pot_savings:,.0f}", "Under Old Regime", "#FFD700", "")
 
         st.divider()
-        st.markdown(f"### 📝 {opt_result['summary']}")
+        st.markdown(f"###  {opt_result['summary']}")
 
         # Gauge + bar chart
         col1, col2 = st.columns([1, 2])
         with col1:
             if pot_savings > 0:
-                st.plotly_chart(tax_savings_gauge(pot_savings, max(pot_savings * 1.5, 100_000)), use_container_width=True)
+                st.plotly_chart(tax_savings_gauge(pot_savings, max(pot_savings * 1.5, 100_000)))
 
         with col2:
             if opt_result["opportunities"]:
-                st.plotly_chart(optimization_horizontal_bar(opt_result["opportunities"]), use_container_width=True)
+                st.plotly_chart(optimization_horizontal_bar(opt_result["opportunities"]))
 
         st.divider()
-        st.markdown("### 🎯 Optimization Opportunities")
+        st.markdown("###  Optimization Opportunities")
 
         for opp in opt_result["opportunities"]:
             with st.container():

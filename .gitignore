@@ -1,0 +1,26 @@
+# Environments
+.env
+.env.local
+.env.*
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Data and Models
+data/raw/*
+!data/raw/.gitkeep
+processed/
+vectordb/
+embeddings/chunks_with_embeddings.json
+
+# Local logs
+*.log
+crash.log
+
+# Streamlit
+.streamlit/
+.env
+.env

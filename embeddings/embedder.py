@@ -2,6 +2,10 @@
 BGE Embedder — generates dense embeddings using BAAI/bge-small-en-v1.5
 Stores chunk text + embedding + metadata for FAISS indexing.
 """
+# Prevent TensorFlow import crash due to Protobuf version conflict on Windows
+import sys
+sys.modules['tensorflow'] = None
+
 import os
 import json
 import numpy as np

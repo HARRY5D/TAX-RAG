@@ -6,7 +6,7 @@ import plotly.express as px
 from typing import Dict, Any, List
 
 
-# ─── Color Palette ─────────────────────────────────────────────────────────────
+#  Color Palette 
 OLD_REGIME_COLOR = "#FF6B6B"
 NEW_REGIME_COLOR = "#4ECDC4"
 SAVINGS_COLOR = "#45B7D1"

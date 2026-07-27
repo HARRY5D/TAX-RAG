@@ -489,6 +489,188 @@
     "approx_tokens": 43
   },
   {
+    "source": "ITR_Documents",
+    "document_name": "ITR_Documents",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 35,
+    "is_curated": false,
+    "char_count": 64,
+    "approx_tokens": 16
+  },
+  {
+    "source": "ITR_Documents",
+    "document_name": "ITR_Documents",
+    "section": "10",
+    "all_sections": [
+      "10"
+    ],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 36,
+    "is_curated": false,
+    "char_count": 1024,
+    "approx_tokens": 256
+  },
+  {
+    "source": "ITR_Documents",
+    "document_name": "ITR_Documents",
+    "section": "192",
+    "all_sections": [
+      "192",
+      "194A"
+    ],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 37,
+    "is_curated": false,
+    "char_count": 992,
+    "approx_tokens": 248
+  },
+  {
+    "source": "ITR_Documents",
+    "document_name": "ITR_Documents",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 38,
+    "is_curated": false,
+    "char_count": 1147,
+    "approx_tokens": 286
+  },
+  {
+    "source": "ITR_Documents",
+    "document_name": "ITR_Documents",
+    "section": "24",
+    "all_sections": [
+      "24",
+      "80C",
+      "80D"
+    ],
+    "topic": "home_loan_interest",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 39,
+    "is_curated": false,
+    "char_count": 906,
+    "approx_tokens": 226
+  },
+  {
+    "source": "ITR_Documents",
+    "document_name": "ITR_Documents",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 40,
+    "is_curated": false,
+    "char_count": 787,
+    "approx_tokens": 196
+  },
+  {
+    "source": "ITR_Documents",
+    "document_name": "ITR_Documents",
+    "section": "234F",
+    "all_sections": [
+      "234F"
+    ],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 41,
+    "is_curated": false,
+    "char_count": 496,
+    "approx_tokens": 124
+  },
+  {
+    "source": "ITR_Filing",
+    "document_name": "ITR_Filing",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 42,
+    "is_curated": false,
+    "char_count": 60,
+    "approx_tokens": 15
+  },
+  {
+    "source": "ITR_Filing",
+    "document_name": "ITR_Filing",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 43,
+    "is_curated": false,
+    "char_count": 1024,
+    "approx_tokens": 256
+  },
+  {
+    "source": "ITR_Filing",
+    "document_name": "ITR_Filing",
+    "section": "194A",
+    "all_sections": [
+      "194A"
+    ],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 44,
+    "is_curated": false,
+    "char_count": 1110,
+    "approx_tokens": 277
+  },
+  {
+    "source": "ITR_Filing",
+    "document_name": "ITR_Filing",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 45,
+    "is_curated": false,
+    "char_count": 1247,
+    "approx_tokens": 311
+  },
+  {
+    "source": "ITR_Filing",
+    "document_name": "ITR_Filing",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 46,
+    "is_curated": false,
+    "char_count": 513,
+    "approx_tokens": 128
+  },
+  {
+    "source": "ITR_Filing",
+    "document_name": "ITR_Filing",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 47,
+    "is_curated": false,
+    "char_count": 285,
+    "approx_tokens": 71
+  },
+  {
     "source": "Curated — NPS",
     "document_name": "NPS",
     "section": "general",
@@ -496,7 +678,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 35,
+    "chunk_id": 48,
     "is_curated": true,
     "char_count": 106,
     "approx_tokens": 26
@@ -509,7 +691,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 36,
+    "chunk_id": 49,
     "is_curated": true,
     "char_count": 174,
     "approx_tokens": 43
@@ -522,7 +704,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 37,
+    "chunk_id": 50,
     "is_curated": true,
     "char_count": 818,
     "approx_tokens": 204
@@ -535,7 +717,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 38,
+    "chunk_id": 51,
     "is_curated": true,
     "char_count": 215,
     "approx_tokens": 53
@@ -548,7 +730,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 39,
+    "chunk_id": 52,
     "is_curated": true,
     "char_count": 159,
     "approx_tokens": 39
@@ -561,7 +743,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 40,
+    "chunk_id": 53,
     "is_curated": true,
     "char_count": 250,
     "approx_tokens": 62
@@ -576,7 +758,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 41,
+    "chunk_id": 54,
     "is_curated": true,
     "char_count": 170,
     "approx_tokens": 42
@@ -589,7 +771,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 42,
+    "chunk_id": 55,
     "is_curated": true,
     "char_count": 120,
     "approx_tokens": 30
@@ -602,7 +784,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 43,
+    "chunk_id": 56,
     "is_curated": true,
     "char_count": 166,
     "approx_tokens": 41
@@ -615,7 +797,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 44,
+    "chunk_id": 57,
     "is_curated": true,
     "char_count": 500,
     "approx_tokens": 125
@@ -633,7 +815,7 @@
     "topic": "deduction_investments",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 45,
+    "chunk_id": 58,
     "is_curated": true,
     "char_count": 474,
     "approx_tokens": 118
@@ -648,7 +830,7 @@
     "topic": "rebate",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 46,
+    "chunk_id": 59,
     "is_curated": true,
     "char_count": 275,
     "approx_tokens": 68
@@ -661,7 +843,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 47,
+    "chunk_id": 60,
     "is_curated": true,
     "char_count": 284,
     "approx_tokens": 71
@@ -674,7 +856,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 48,
+    "chunk_id": 61,
     "is_curated": true,
     "char_count": 212,
     "approx_tokens": 53
@@ -687,7 +869,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 49,
+    "chunk_id": 62,
     "is_curated": true,
     "char_count": 238,
     "approx_tokens": 59
@@ -700,7 +882,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 50,
+    "chunk_id": 63,
     "is_curated": true,
     "char_count": 237,
     "approx_tokens": 59
@@ -715,10 +897,255 @@
     "topic": "rebate",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 51,
+    "chunk_id": 64,
     "is_curated": true,
     "char_count": 168,
     "approx_tokens": 42
+  },
+  {
+    "source": "Presumptive_Taxation",
+    "document_name": "Presumptive_Taxation",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 65,
+    "is_curated": false,
+    "char_count": 414,
+    "approx_tokens": 103
+  },
+  {
+    "source": "Presumptive_Taxation",
+    "document_name": "Presumptive_Taxation",
+    "section": "80C",
+    "all_sections": [
+      "80C"
+    ],
+    "topic": "deduction_investments",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 66,
+    "is_curated": false,
+    "char_count": 1551,
+    "approx_tokens": 387
+  },
+  {
+    "source": "Presumptive_Taxation",
+    "document_name": "Presumptive_Taxation",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 67,
+    "is_curated": false,
+    "char_count": 838,
+    "approx_tokens": 209
+  },
+  {
+    "source": "Presumptive_Taxation",
+    "document_name": "Presumptive_Taxation",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 68,
+    "is_curated": false,
+    "char_count": 710,
+    "approx_tokens": 177
+  },
+  {
+    "source": "Presumptive_Taxation",
+    "document_name": "Presumptive_Taxation",
+    "section": "87A",
+    "all_sections": [
+      "87A"
+    ],
+    "topic": "rebate",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 69,
+    "is_curated": false,
+    "char_count": 1194,
+    "approx_tokens": 298
+  },
+  {
+    "source": "Presumptive_Taxation",
+    "document_name": "Presumptive_Taxation",
+    "section": "87A",
+    "all_sections": [
+      "87A"
+    ],
+    "topic": "rebate",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 70,
+    "is_curated": false,
+    "char_count": 793,
+    "approx_tokens": 198
+  },
+  {
+    "source": "Presumptive_Taxation",
+    "document_name": "Presumptive_Taxation",
+    "section": "28",
+    "all_sections": [
+      "194",
+      "194J",
+      "28",
+      "87A"
+    ],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 71,
+    "is_curated": false,
+    "char_count": 588,
+    "approx_tokens": 147
+  },
+  {
+    "source": "Rental_Income",
+    "document_name": "Rental_Income",
+    "section": "22",
+    "all_sections": [
+      "22"
+    ],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 72,
+    "is_curated": false,
+    "char_count": 325,
+    "approx_tokens": 81
+  },
+  {
+    "source": "Rental_Income",
+    "document_name": "Rental_Income",
+    "section": "24",
+    "all_sections": [
+      "24"
+    ],
+    "topic": "home_loan_interest",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 73,
+    "is_curated": false,
+    "char_count": 1689,
+    "approx_tokens": 422
+  },
+  {
+    "source": "Rental_Income",
+    "document_name": "Rental_Income",
+    "section": "24",
+    "all_sections": [
+      "24"
+    ],
+    "topic": "home_loan_interest",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 74,
+    "is_curated": false,
+    "char_count": 528,
+    "approx_tokens": 132
+  },
+  {
+    "source": "Rental_Income",
+    "document_name": "Rental_Income",
+    "section": "24",
+    "all_sections": [
+      "24",
+      "71B"
+    ],
+    "topic": "home_loan_interest",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 75,
+    "is_curated": false,
+    "char_count": 1116,
+    "approx_tokens": 279
+  },
+  {
+    "source": "Rental_Income",
+    "document_name": "Rental_Income",
+    "section": "24",
+    "all_sections": [
+      "24",
+      "80C",
+      "80D"
+    ],
+    "topic": "home_loan_interest",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 76,
+    "is_curated": false,
+    "char_count": 868,
+    "approx_tokens": 217
+  },
+  {
+    "source": "Rental_Income",
+    "document_name": "Rental_Income",
+    "section": "24",
+    "all_sections": [
+      "24"
+    ],
+    "topic": "home_loan_interest",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 77,
+    "is_curated": false,
+    "char_count": 357,
+    "approx_tokens": 89
+  },
+  {
+    "source": "Rental_Income",
+    "document_name": "Rental_Income",
+    "section": "24",
+    "all_sections": [
+      "24"
+    ],
+    "topic": "home_loan_interest",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 78,
+    "is_curated": false,
+    "char_count": 459,
+    "approx_tokens": 114
+  },
+  {
+    "source": "Rental_Income",
+    "document_name": "Rental_Income",
+    "section": "80C",
+    "all_sections": [
+      "24",
+      "80C"
+    ],
+    "topic": "deduction_investments",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 79,
+    "is_curated": false,
+    "char_count": 952,
+    "approx_tokens": 238
+  },
+  {
+    "source": "Rental_Income",
+    "document_name": "Rental_Income",
+    "section": "22",
+    "all_sections": [
+      "22",
+      "23",
+      "24",
+      "71B",
+      "80C"
+    ],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 80,
+    "is_curated": false,
+    "char_count": 562,
+    "approx_tokens": 140
   },
   {
     "source": "Curated — Tax Slabs",
@@ -728,7 +1155,7 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 52,
+    "chunk_id": 81,
     "is_curated": true,
     "char_count": 101,
     "approx_tokens": 25
@@ -743,10 +1170,10 @@
     "topic": "rebate",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 53,
+    "chunk_id": 82,
     "is_curated": true,
-    "char_count": 407,
-    "approx_tokens": 101
+    "char_count": 425,
+    "approx_tokens": 106
   },
   {
     "source": "Curated — Tax Slabs",
@@ -756,10 +1183,10 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 54,
+    "chunk_id": 83,
     "is_curated": true,
-    "char_count": 301,
-    "approx_tokens": 75
+    "char_count": 338,
+    "approx_tokens": 84
   },
   {
     "source": "Curated — Tax Slabs",
@@ -769,10 +1196,10 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 55,
+    "chunk_id": 84,
     "is_curated": true,
-    "char_count": 314,
-    "approx_tokens": 78
+    "char_count": 330,
+    "approx_tokens": 82
   },
   {
     "source": "Curated — Tax Slabs",
@@ -782,9 +1209,9 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 56,
+    "chunk_id": 85,
     "is_curated": true,
-    "char_count": 112,
+    "char_count": 114,
     "approx_tokens": 28
   },
   {
@@ -797,10 +1224,10 @@
     "topic": "rebate",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 57,
+    "chunk_id": 86,
     "is_curated": true,
-    "char_count": 234,
-    "approx_tokens": 58
+    "char_count": 692,
+    "approx_tokens": 173
   },
   {
     "source": "Curated — Tax Slabs",
@@ -810,10 +1237,25 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 58,
+    "chunk_id": 87,
     "is_curated": true,
-    "char_count": 444,
-    "approx_tokens": 111
+    "char_count": 826,
+    "approx_tokens": 206
+  },
+  {
+    "source": "Curated — Tax Slabs",
+    "document_name": "Tax_Slabs",
+    "section": "87A",
+    "all_sections": [
+      "87A"
+    ],
+    "topic": "rebate",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 88,
+    "is_curated": true,
+    "char_count": 1072,
+    "approx_tokens": 268
   },
   {
     "source": "Curated — Tax Slabs",
@@ -823,10 +1265,10 @@
     "topic": "general_tax_law",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 59,
+    "chunk_id": 89,
     "is_curated": true,
-    "char_count": 325,
-    "approx_tokens": 81
+    "char_count": 367,
+    "approx_tokens": 91
   },
   {
     "source": "Curated — Tax Slabs",
@@ -840,10 +1282,153 @@
     "topic": "rebate",
     "year": "2026",
     "page_num": 0,
-    "chunk_id": 60,
+    "chunk_id": 90,
     "is_curated": true,
-    "char_count": 180,
-    "approx_tokens": 45
+    "char_count": 349,
+    "approx_tokens": 87
+  },
+  {
+    "source": "VDA_Crypto",
+    "document_name": "VDA_Crypto",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 91,
+    "is_curated": false,
+    "char_count": 71,
+    "approx_tokens": 17
+  },
+  {
+    "source": "VDA_Crypto",
+    "document_name": "VDA_Crypto",
+    "section": "2",
+    "all_sections": [
+      "2"
+    ],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 92,
+    "is_curated": false,
+    "char_count": 243,
+    "approx_tokens": 60
+  },
+  {
+    "source": "VDA_Crypto",
+    "document_name": "VDA_Crypto",
+    "section": "87A",
+    "all_sections": [
+      "87A"
+    ],
+    "topic": "rebate",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 93,
+    "is_curated": false,
+    "char_count": 794,
+    "approx_tokens": 198
+  },
+  {
+    "source": "VDA_Crypto",
+    "document_name": "VDA_Crypto",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 94,
+    "is_curated": false,
+    "char_count": 751,
+    "approx_tokens": 187
+  },
+  {
+    "source": "VDA_Crypto",
+    "document_name": "VDA_Crypto",
+    "section": "194S",
+    "all_sections": [
+      "194S"
+    ],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 95,
+    "is_curated": false,
+    "char_count": 500,
+    "approx_tokens": 125
+  },
+  {
+    "source": "VDA_Crypto",
+    "document_name": "VDA_Crypto",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 96,
+    "is_curated": false,
+    "char_count": 504,
+    "approx_tokens": 126
+  },
+  {
+    "source": "VDA_Crypto",
+    "document_name": "VDA_Crypto",
+    "section": "194S",
+    "all_sections": [
+      "194S",
+      "87A"
+    ],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 97,
+    "is_curated": false,
+    "char_count": 1291,
+    "approx_tokens": 322
+  },
+  {
+    "source": "VDA_Crypto",
+    "document_name": "VDA_Crypto",
+    "section": "87A",
+    "all_sections": [
+      "87A"
+    ],
+    "topic": "rebate",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 98,
+    "is_curated": false,
+    "char_count": 512,
+    "approx_tokens": 128
+  },
+  {
+    "source": "VDA_Crypto",
+    "document_name": "VDA_Crypto",
+    "section": "general",
+    "all_sections": [],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 99,
+    "is_curated": false,
+    "char_count": 836,
+    "approx_tokens": 209
+  },
+  {
+    "source": "VDA_Crypto",
+    "document_name": "VDA_Crypto",
+    "section": "194S",
+    "all_sections": [
+      "194S"
+    ],
+    "topic": "general_tax_law",
+    "year": "2026",
+    "page_num": 0,
+    "chunk_id": 100,
+    "is_curated": false,
+    "char_count": 240,
+    "approx_tokens": 60
   },
   {
     "source": "Income Tax Act 1962",

@@ -1,24 +1,22 @@
 """
-LangGraph Orchestrator — central workflow graph for FinAssist AI.
+LangGraph Orchestrator — central workflow graph for FinAssist AI (v4).
 
-Full flow:
-  User Query
-      │
+Fixed flow:
   detect_intent
-      │
-  ┌───┴──────────────────────────────┐
-  │ (if form16 doc uploaded)         │
-  form16_parser                      │
-      │                              │
-  tax_engine ◄────────────────────────┘ (if profile available)
-      │
-  optimization (if intent = optimization)
-      │
-  rag_retrieve (if needs retrieval)
-      │
-  generate_answer
-      │
-  Final Answer
+      |
+  [form16_parser?]      <- only if form16 uploaded
+      |
+  [tax_engine?]         <- only if tax_profile available
+      |
+  [optimize?]           <- only if optimization intent AND tax_result available
+      |
+  [retrieve_context?]   <- only if needs_retrieval=True
+      |
+  generate_answer       <- always (strict regime lock + verified tax data)
+      |
+  gemini_verify         <- always (skips gracefully if Gemini disabled/unavailable)
+      |
+  END
 """
 from langgraph.graph import StateGraph, END
 from recommendation_engine.state import GraphState
@@ -29,87 +27,142 @@ from recommendation_engine.nodes import (
     optimization_node,
     rag_retrieve_node,
     generate_answer_node,
+    gemini_verify_node,
 )
 
 
-# ─── Conditional routing functions ────────────────────────────────────────────
+# ─── Routing functions ─────────────────────────────────────────────────────────
 
-def should_parse_form16(state: GraphState) -> str:
+def route_after_intent(state: GraphState) -> str:
     if state.needs_form16 and state.form16_path:
         return "parse_form16"
-    return "check_calculation"
+    return "maybe_calculate"
 
 
-def should_calculate_tax(state: GraphState) -> str:
-    if state.needs_calculation and state.tax_profile:
+def route_maybe_calculate(state: GraphState) -> str:
+    if state.needs_calculation and bool(state.tax_profile):
         return "calculate_tax"
-    return "check_optimization"
+    return "maybe_optimize"
 
 
-def should_optimize(state: GraphState) -> str:
+def route_after_calculate(state: GraphState) -> str:
     if state.needs_optimization and state.tax_result is not None:
         return "optimize"
-    return "retrieve_context"
+    return "maybe_retrieve"
 
 
-def should_retrieve(state: GraphState) -> str:
+def route_after_optimize(state: GraphState) -> str:
+    return "maybe_retrieve"
+
+
+def route_maybe_retrieve(state: GraphState) -> str:
+    """Skip retrieval for general_chat or any intent that doesn't need it."""
     if state.needs_retrieval:
         return "retrieve"
     return "generate"
 
 
-def build_finassist_graph() -> StateGraph:
-    """
-    Construct and compile the FinAssist LangGraph workflow.
-    """
-    # Use dict-based state for LangGraph compatibility
+# ─── Passthrough nodes ─────────────────────────────────────────────────────────
+
+def maybe_calculate_node(state: GraphState) -> GraphState:
+    return state
+
+
+def maybe_optimize_node(state: GraphState) -> GraphState:
+    return state
+
+
+def maybe_retrieve_node(state: GraphState) -> GraphState:
+    return state
+
+
+# ─── Graph builder ─────────────────────────────────────────────────────────────
+
+def build_finassist_graph():
+    """Construct and compile the FinAssist LangGraph workflow (v3)."""
     workflow = StateGraph(GraphState)
 
-    # ─── Add nodes ─────────────────────────────────────────────────────────────
-    workflow.add_node("detect_intent", detect_intent_node)
-    workflow.add_node("parse_form16", form16_parser_node)
-    workflow.add_node("calculate_tax", tax_engine_node)
-    workflow.add_node("optimize", optimization_node)
+    # Processing nodes
+    workflow.add_node("detect_intent",    detect_intent_node)
+    workflow.add_node("parse_form16",     form16_parser_node)
+    workflow.add_node("calculate_tax",    tax_engine_node)
+    workflow.add_node("optimize",         optimization_node)
     workflow.add_node("retrieve_context", rag_retrieve_node)
-    workflow.add_node("generate_answer", generate_answer_node)
+    workflow.add_node("generate_answer",  generate_answer_node)
+    workflow.add_node("gemini_verify",    gemini_verify_node)
+
+    # ─── Passthrough routing nodes ─────────────────────────────────────────────
+    workflow.add_node("maybe_calculate", maybe_calculate_node)
+    workflow.add_node("maybe_optimize",  maybe_optimize_node)
+    workflow.add_node("maybe_retrieve",  maybe_retrieve_node)
 
     # ─── Entry point ───────────────────────────────────────────────────────────
     workflow.set_entry_point("detect_intent")
 
-    # ─── Edges with conditional routing ────────────────────────────────────────
+    # 1. Intent → form16 OR maybe_calculate
     workflow.add_conditional_edges(
         "detect_intent",
-        should_parse_form16,
+        route_after_intent,
         {
-            "parse_form16": "parse_form16",
-            "check_calculation": "calculate_tax",
+            "parse_form16":    "parse_form16",
+            "maybe_calculate": "maybe_calculate",
         },
     )
 
-    workflow.add_edge("parse_form16", "calculate_tax")
+    # 2. Form16 → maybe_calculate
+    workflow.add_conditional_edges(
+        "parse_form16",
+        route_maybe_calculate,
+        {
+            "calculate_tax":  "calculate_tax",
+            "maybe_optimize": "maybe_optimize",
+        },
+    )
 
+    # 3. maybe_calculate → calculate or skip to maybe_optimize
+    workflow.add_conditional_edges(
+        "maybe_calculate",
+        route_maybe_calculate,
+        {
+            "calculate_tax":  "calculate_tax",
+            "maybe_optimize": "maybe_optimize",
+        },
+    )
+
+    # 4. calculate_tax → optimize or maybe_retrieve
     workflow.add_conditional_edges(
         "calculate_tax",
-        should_optimize,
+        route_after_calculate,
         {
-            "optimize": "optimize",
-            "retrieve_context": "retrieve_context",
+            "optimize":       "optimize",
+            "maybe_retrieve": "maybe_retrieve",
         },
     )
 
-    workflow.add_edge("optimize", "retrieve_context")
+    # 5. optimize → maybe_retrieve
+    workflow.add_edge("optimize", "maybe_retrieve")
 
+    # 6. maybe_optimize → maybe_retrieve
+    workflow.add_edge("maybe_optimize", "maybe_retrieve")
+
+    # 7. maybe_retrieve → retrieve (if needs_retrieval) OR generate (skip retrieval)
     workflow.add_conditional_edges(
-        "retrieve_context",
-        should_retrieve,
+        "maybe_retrieve",
+        route_maybe_retrieve,
         {
             "retrieve": "retrieve_context",
             "generate": "generate_answer",
         },
     )
 
+    # 8. retrieve_context -> generate
     workflow.add_edge("retrieve_context", "generate_answer")
-    workflow.add_edge("generate_answer", END)
+
+    # 9. generate -> gemini_verify (always; node skips gracefully if disabled)
+    workflow.add_edge("generate_answer", "gemini_verify")
+
+    # 10. gemini_verify -> END
+    workflow.add_edge("gemini_verify", END)
 
     return workflow.compile()
 
@@ -119,7 +172,6 @@ _compiled_graph = None
 
 
 def get_graph():
-    """Return the compiled LangGraph (singleton)."""
     global _compiled_graph
     if _compiled_graph is None:
         _compiled_graph = build_finassist_graph()
@@ -132,22 +184,18 @@ def run_query(
     tax_profile: dict = None,
     form16_path: str = None,
     chat_history: list = None,
-) -> GraphState:
+) -> dict:
     """
     Run a user query through the full LangGraph workflow.
 
-    Args:
-        user_query: The user's question/request
-        mode: "chat" (default) or "document" (Form16 upload)
-        tax_profile: Optional dict with income/deduction data
-        form16_path: Optional path to Form 16 PDF
-        chat_history: Previous conversation turns
-
-    Returns:
-        Final GraphState with answer and all intermediate results
+    Always returns a plain Python dict (all nested Pydantic models
+    serialized via model_dump()). Safe to use with .get() everywhere.
     """
-    from config.langsmith_config import configure_langsmith
-    configure_langsmith()
+    try:
+        from config.langsmith_config import configure_langsmith
+        configure_langsmith()
+    except Exception:
+        pass
 
     initial_state = GraphState(
         user_query=user_query,
@@ -158,6 +206,24 @@ def run_query(
     )
 
     graph = get_graph()
-    final_state = graph.invoke(initial_state)
+    raw = graph.invoke(initial_state)
 
-    return final_state
+    # ── Normalize to a plain dict (no Pydantic sub-objects) ───────────────────
+    # LangGraph can return a dict with Pydantic objects as values (e.g. rag_context
+    # is a RetrievedContext instance inside a dict). Calling model_dump() converts
+    # everything to plain Python types so the frontend can safely use .get().
+    if hasattr(raw, "model_dump"):
+        # raw is already a Pydantic GraphState
+        return raw.model_dump()
+    if isinstance(raw, dict):
+        # raw is a dict but values may still be Pydantic objects — reconstruct then dump
+        try:
+            return GraphState(**raw).model_dump()
+        except Exception:
+            # Fallback: manually convert any Pydantic values
+            clean = {}
+            for k, v in raw.items():
+                clean[k] = v.model_dump() if hasattr(v, "model_dump") else v
+            return clean
+
+    return raw  # should never reach here

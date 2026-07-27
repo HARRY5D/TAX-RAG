@@ -4,7 +4,7 @@ Metric card components for Streamlit dashboard.
 import streamlit as st
 
 
-def metric_card(title: str, value: str, delta: str = "", color: str = "#4ECDC4", icon: str = "💰"):
+def metric_card(title: str, value: str, delta: str = "", color: str = "#4ECDC4", icon: str = ""):
     """Render a styled metric card."""
     delta_html = f'<p class="card-delta">{delta}</p>' if delta else ""
     st.markdown(f"""
@@ -17,7 +17,7 @@ def metric_card(title: str, value: str, delta: str = "", color: str = "#4ECDC4",
     """, unsafe_allow_html=True)
 
 
-def info_card(title: str, content: str, icon: str = "ℹ️"):
+def info_card(title: str, content: str, icon: str = "ℹ"):
     """Render an informational card."""
     st.markdown(f"""
     <div class="info-card">
@@ -31,7 +31,7 @@ def source_citation_card(citations: list):
     """Render source citation cards."""
     if not citations:
         return
-    with st.expander("📚 Legal Sources & Citations", expanded=False):
+    with st.expander(" Legal Sources & Citations", expanded=False):
         for cite in citations:
             st.markdown(f"- {cite}")
 
@@ -42,7 +42,7 @@ def regime_badge(regime: str):
     st.markdown(
         f'<span style="background:{color};color:white;padding:4px 12px;'
         f'border-radius:20px;font-weight:600;font-size:14px;">'
-        f'{"🏛️ Old Regime" if regime == "Old" else "✨ New Regime"}</span>',
+        f'{" Old Regime" if regime == "Old" else " New Regime"}</span>',
         unsafe_allow_html=True,
     )
 

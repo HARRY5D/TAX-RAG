@@ -99,29 +99,53 @@ def main():
 
     all_chunks = []
 
-    # Process curated knowledge base
+    # Check for cached PDF chunks in existing all_chunks.json
+    output_file = processed_dir / "all_chunks.json"
+    cached_pdf_chunks = []
+    
+    if output_file.exists():
+        try:
+            with open(output_file, "r", encoding="utf-8") as f:
+                existing_chunks = json.load(f)
+            # A chunk is a cached PDF chunk if it doesn't have is_curated=True 
+            # and its source doesn't match any curated file stem.
+            curated_stems = {md.stem for md in curated_dir.glob("*.md")}
+            cached_pdf_chunks = [
+                c for c in existing_chunks 
+                if not c.get("is_curated", False) and c.get("source") not in curated_stems
+            ]
+            if cached_pdf_chunks:
+                print(f"\n[Cache] Loaded {len(cached_pdf_chunks)} PDF chunks from existing {output_file.name}")
+        except Exception as e:
+            print(f"⚠️ Could not load cached chunks: {e}")
+
+    # Process curated knowledge base (always run to pick up new documents or changes)
     print("\n=== Processing Curated Knowledge Base ===")
     curated_chunks = process_curated_docs(curated_dir, processed_dir)
     tagged_curated = tag_chunks(curated_chunks)
     all_chunks.extend(tagged_curated)
 
-    # Process PDFs
-    print("\n=== Processing PDFs ===")
-    for filename, (human_name, stem) in SOURCE_MAP.items():
-        pdf_path = raw_dir / filename
-        if not pdf_path.exists():
-            # Try data/ root
-            pdf_path = settings.base_dir / "data" / filename
-        if not pdf_path.exists():
-            print(f"⚠️  Skipping {filename} — not found")
-            continue
+    if cached_pdf_chunks:
+        # Use cached PDF chunks
+        print("\n=== Reusing Cached PDF Chunks ===")
+        all_chunks.extend(cached_pdf_chunks)
+    else:
+        # Full processing fallback
+        print("\n=== Processing PDFs (Full extraction) ===")
+        for filename, (human_name, stem) in SOURCE_MAP.items():
+            pdf_path = raw_dir / filename
+            if not pdf_path.exists():
+                pdf_path = settings.base_dir / "data" / filename
+            if not pdf_path.exists():
+                print(f"⚠️  Skipping {filename} — not found")
+                continue
 
-        try:
-            chunks = process_pdf(pdf_path, human_name, stem)
-            tagged = tag_chunks(chunks)
-            all_chunks.extend(tagged)
-        except Exception as e:
-            print(f"❌ Error processing {filename}: {e}")
+            try:
+                chunks = process_pdf(pdf_path, human_name, stem)
+                tagged = tag_chunks(chunks)
+                all_chunks.extend(tagged)
+            except Exception as e:
+                print(f"❌ Error processing {filename}: {e}")
 
     # Save all chunks (without embeddings)
     output_file = processed_dir / "all_chunks.json"

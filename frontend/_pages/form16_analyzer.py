@@ -8,7 +8,7 @@ from frontend.components.cards import metric_card
 
 
 def show_form16_analyzer():
-    st.markdown('<p class="section-header">📄 Form16 Analyzer</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header"> Form16 Analyzer</p>', unsafe_allow_html=True)
     st.markdown('<p class="section-sub">Upload your Form 16 PDF for automatic tax analysis</p>', unsafe_allow_html=True)
 
     st.info("**Optional Feature** — This page is useful if you have your Form 16 available. You can also use the Tax Assistant or Tax Calculator without it.")
@@ -25,7 +25,7 @@ def show_form16_analyzer():
             tmp.write(uploaded.read())
             tmp_path = tmp.name
 
-        with st.spinner("🔍 Extracting Form 16 data..."):
+        with st.spinner(" Extracting Form 16 data..."):
             try:
                 from form16_parser.parser import extract_form16
                 from tax_engine.calculator import calculate_full_tax
@@ -48,7 +48,7 @@ def show_form16_analyzer():
         <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:12px; border:1px solid {conf_color}; margin-bottom:16px;">
             <span style="color:{conf_color}; font-weight:600;">Extraction Confidence: {confidence*100:.0f}%</span>
             <span style="color:#8B949E; font-size:13px; margin-left:12px;">
-            {"✅ Good extraction" if confidence > 0.6 else "⚠️ Partial extraction — verify manually" if confidence > 0.3 else "❌ Low confidence — please verify all values"}
+            {" Good extraction" if confidence > 0.6 else "⚠ Partial extraction — verify manually" if confidence > 0.3 else " Low confidence — please verify all values"}
             </span>
         </div>
         """, unsafe_allow_html=True)
@@ -60,16 +60,16 @@ def show_form16_analyzer():
         # KPI cards
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            metric_card("Gross Salary", f"₹{b.gross_salary:,.0f}", "", "#4ECDC4", "💼")
+            metric_card("Gross Salary", f"₹{b.gross_salary:,.0f}", "", "#4ECDC4", "")
         with col2:
-            metric_card("TDS Deducted", f"₹{b.tds_deducted:,.0f}", "", "#FF6B6B", "🏦")
+            metric_card("TDS Deducted", f"₹{b.tds_deducted:,.0f}", "", "#FF6B6B", "")
         with col3:
-            metric_card("Taxable Income", f"₹{b.taxable_income:,.0f}", "", "#FFD700", "📊")
+            metric_card("Taxable Income", f"₹{b.taxable_income:,.0f}", "", "#FFD700", "")
         with col4:
-            metric_card("Total Tax Payable", f"₹{b.total_tax_payable:,.0f}", "", "#A78BFA", "💰")
+            metric_card("Total Tax Payable", f"₹{b.total_tax_payable:,.0f}", "", "#A78BFA", "")
 
         st.divider()
-        st.markdown("### 📋 Deductions Extracted")
+        st.markdown("###  Deductions Extracted")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -92,11 +92,11 @@ def show_form16_analyzer():
             st.markdown(f"**Total Tax Payable: ₹{b.total_tax_payable:,.0f}**")
             refund = b.tds_deducted - b.total_tax_payable
             if refund > 0:
-                st.success(f"🎉 Refund Due: ₹{refund:,.0f}")
+                st.success(f" Refund Due: ₹{refund:,.0f}")
             elif refund < 0:
-                st.warning(f"⚠️ Additional Tax Due: ₹{abs(refund):,.0f}")
+                st.warning(f"⚠ Additional Tax Due: ₹{abs(refund):,.0f}")
             else:
-                st.info("✅ TDS matches tax payable — no refund or additional tax")
+                st.info(" TDS matches tax payable — no refund or additional tax")
 
         # Parsing notes
         if form16_data.parsing_notes:
@@ -104,13 +104,13 @@ def show_form16_analyzer():
 
         # Run full analysis
         if b.gross_salary and b.gross_salary > 0:
-            if st.button("🔍 Run Full Tax Analysis", key="form16_analyze"):
+            if st.button(" Run Full Tax Analysis", key="form16_analyze"):
                 tax_profile = form16_data.to_tax_profile()
                 try:
                     from tax_engine.calculator import calculate_full_tax
                     result = calculate_full_tax(tax_profile)
                     st.session_state["last_tax_result"] = result
                     st.session_state["last_tax_profile"] = tax_profile
-                    st.success("✅ Analysis complete! Switch to **Tax Calculator** or **Tax Optimizer** for detailed view.")
+                    st.success(" Analysis complete! Switch to **Tax Calculator** or **Tax Optimizer** for detailed view.")
                 except Exception as e:
                     st.error(f"Analysis error: {e}")

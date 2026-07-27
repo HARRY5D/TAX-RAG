@@ -3,7 +3,23 @@ Pydantic Settings for FinAssist AI.
 All configuration is loaded from .env file.
 """
 import os
+import sys
 from pathlib import Path
+
+# Allow HF_HUB_OFFLINE to be controlled via .env (RERANKER_OFFLINE=true/false)
+# Only force offline if explicitly set. Don't hard-code it so internet downloads work.
+_reranker_offline = os.environ.get("RERANKER_OFFLINE", "false").lower() == "true"
+if _reranker_offline:
+    os.environ["HF_HUB_OFFLINE"] = "1"
+    os.environ["TRANSFORMERS_OFFLINE"] = "1"
+else:
+    # Ensure these are NOT set so downloads work when internet is available
+    os.environ.pop("HF_HUB_OFFLINE", None)
+    os.environ.pop("TRANSFORMERS_OFFLINE", None)
+
+# Prevent TensorFlow import crash due to Protobuf version conflict on Windows
+sys.modules['tensorflow'] = None
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
@@ -20,9 +36,11 @@ class Settings(BaseSettings):
     app_version: str = Field(default="1.0.0")
     debug: bool = Field(default=False)
 
-    # Google / Gemini
+    # Google / Gemini (Section Verifier — Google AI Studio key)
     gemini_api_key: str = Field(default="")
-    google_api_key: str = Field(default="")
+    gemini_model: str = Field(default="gemini-1.5-flash")          # primary: 1500 req/day free tier
+    gemini_fallback_model: str = Field(default="gemini-1.5-flash-8b")  # fallback: high free-tier quota
+    gemini_verify_enabled: bool = Field(default=True)
 
     # LangSmith
     langsmith_tracing: str = Field(default="true")
@@ -33,8 +51,13 @@ class Settings(BaseSettings):
     # Model config
     embedding_model: str = Field(default="BAAI/bge-small-en-v1.5")
     reranker_model: str = Field(default="BAAI/bge-reranker-base")
-    llm_model: str = Field(default="gemini-2.5-flash")
+    reranker_offline: bool = Field(default=False)  # set True to skip all downloads
     llm_temperature: float = Field(default=0.1)
+
+    # Ollama (local offline LLM)
+    ollama_base_url: str = Field(default="http://localhost:11434")
+    ollama_model: str = Field(default="qwen2.5-coder:7b")
+    ollama_fallback_model: str = Field(default="deepseek-coder:6.7b")
 
     # FAISS
     faiss_index_path: str = Field(default="vectordb/faiss_index")
