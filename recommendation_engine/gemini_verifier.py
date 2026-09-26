@@ -82,8 +82,9 @@ class GeminiVerifier:
             primary = getattr(settings, 'gemini_model', 'gemini-1.5-flash')
             if primary.startswith('models/'):
                 primary = primary[len('models/'):]
-            fallback = getattr(settings, 'gemini_fallback_model', 'gemini-1.5-flash-8b')
-            raw_candidates = [primary, fallback, 'gemini-1.5-flash', 'gemini-1.5-flash-8b']
+            fallback = getattr(settings, 'gemini_fallback_model', 'gemini-3.5-flash')
+            # Safety nets use current 3.x generation (1.5-series retired mid-2026)
+            raw_candidates = [primary, fallback, 'gemini-3.5-flash', 'gemini-3.5-flash-lite']
             seen: set = set()
             self._model_candidates = [
                 m for m in raw_candidates if not (m in seen or seen.add(m))

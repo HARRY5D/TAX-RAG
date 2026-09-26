@@ -13,7 +13,7 @@ __pycache__/
 data/raw/*
 !data/raw/.gitkeep
 processed/
-vectordb/
+vectordb/faiss_index/
 embeddings/chunks_with_embeddings.json
 
 # Local logs
@@ -22,5 +22,3 @@ crash.log
 
 # Streamlit
 .streamlit/
-.env
-.env

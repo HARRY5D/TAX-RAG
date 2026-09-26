@@ -204,8 +204,8 @@ with st.sidebar:
             " Tax Calculator",
             " Tax Optimizer",
             " Form16 Analyzer",
-            "⚖ Regime Comparator",
-            "ℹ About",
+            " Regime Comparator",
+            " About",
         ],
         label_visibility="collapsed",
     )
@@ -244,11 +244,11 @@ elif page == " Form16 Analyzer":
     from frontend._pages.form16_analyzer import show_form16_analyzer
     show_form16_analyzer()
 
-elif page == "⚖ Regime Comparator":
+elif page == " Regime Comparator":
     from frontend._pages.regime_comparator import show_regime_comparator
     show_regime_comparator()
 
-elif page == "ℹ About":
+elif page == " About":
     st.markdown('<p class="section-header">FinAssist AI</p>', unsafe_allow_html=True)
     st.markdown('<p class="section-sub">Intelligent Tax Planning for Indian Taxpayers</p>', unsafe_allow_html=True)
 
@@ -277,5 +277,5 @@ elif page == "ℹ About":
     - Finance Bill 2025
     - Budget Memorandum 2025
     - Budget Speech 2025
-    - Curated expert knowledge base (7 topic documents)
+    - Curated expert knowledge base (5 topic documents)
     """)

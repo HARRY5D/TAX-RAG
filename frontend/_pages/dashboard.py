@@ -26,7 +26,7 @@ def show_dashboard():
 
     with col1:
         st.markdown("""
-        <div class="info-card">
+        <div class="info-card" style="min-height:120px;">
             <h4> Tax Assistant</h4>
             <p>Ask any tax question in plain English. Get answers backed by legal sections.</p>
         </div>
@@ -34,7 +34,7 @@ def show_dashboard():
 
     with col2:
         st.markdown("""
-        <div class="info-card">
+        <div class="info-card" style="min-height:120px;">
             <h4> Tax Calculator</h4>
             <p>Enter your income and deductions to get accurate old/new regime tax comparison.</p>
         </div>
@@ -42,7 +42,7 @@ def show_dashboard():
 
     with col3:
         st.markdown("""
-        <div class="info-card">
+        <div class="info-card" style="min-height:120px;">
             <h4> Tax Optimizer</h4>
             <p>Find unused deduction capacity and estimate additional tax savings.</p>
         </div>

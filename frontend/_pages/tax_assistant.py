@@ -104,14 +104,31 @@ def show_tax_assistant():
     #  Suggestion buttons 
     # Only show when chat is empty AND no pending query
     if not st.session_state.messages and st.session_state.pending_query is None:
-        st.markdown("** Try asking:**")
+        st.markdown(" Try asking: ")
         suggestions = [
-            "I earn ₹12 lakh. Which tax regime should I choose?",
+            "I earn Rs.12 lakh. Which tax regime should I choose?",
             "Can I claim both HRA and home loan deductions?",
             "What is the 80C deduction limit for FY 2025-26?",
-            "I invested ₹75,000 in ELSS. What else can I claim?",
+            "I invested Rs.75,000 in ELSS. What else can I claim?",
             "How much can I save with NPS investment?",
         ]
+        # CSS: equalise min-height for all suggestion buttons
+        st.markdown(
+            '<style>'
+            'div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] button {'
+            'min-height:82px !important;'
+            'height:auto !important;'
+            'white-space:normal !important;'
+            'word-wrap:break-word !important;'
+            'text-align:left !important;'
+            'padding:10px 12px !important;'
+            'font-size:0.82rem !important;'
+            'line-height:1.45 !important;'
+            'align-items:flex-start !important;'
+            '}'
+            '</style>',
+            unsafe_allow_html=True,
+        )
         cols = st.columns(len(suggestions))
         for i, (col, s) in enumerate(zip(cols, suggestions)):
             with col:

@@ -25,7 +25,7 @@ class FAISSStore:
 
     def build(self, embedded_chunks: List[Dict[str, Any]]) -> None:
         """Build FAISS index from embedded chunks."""
-        print(f"[FAISS] Building index from {len(embedded_chunks)} chunks...")
+        print(f"[FAISS] Building index from {len(embedded_chunks)} chunks...", flush=True)
 
         embeddings = np.array(
             [c["embedding"] for c in embedded_chunks], dtype=np.float32
@@ -40,7 +40,7 @@ class FAISSStore:
         self.texts = [c.get("chunk_text", "") for c in embedded_chunks]
         self.metadata = [c.get("metadata", {}) for c in embedded_chunks]
 
-        print(f"[FAISS] Index built. Total vectors: {self.index.ntotal}")
+        print(f"[FAISS] Index built. Total vectors: {self.index.ntotal}", flush=True)
 
     def save(self) -> None:
         """Persist FAISS index and metadata to disk."""
@@ -54,7 +54,7 @@ class FAISSStore:
         with open(self.index_path / "texts.json", "w", encoding="utf-8") as f:
             json.dump(self.texts, f, ensure_ascii=False, indent=2)
 
-        print(f"[FAISS] Saved index → {self.index_path}")
+        print(f"[FAISS] Saved index → {self.index_path}", flush=True)
 
     def load(self) -> None:
         """Load persisted FAISS index and metadata from disk."""
@@ -73,7 +73,7 @@ class FAISSStore:
         with open(self.index_path / "texts.json", "r", encoding="utf-8") as f:
             self.texts = json.load(f)
 
-        print(f"[FAISS] Loaded index. Total vectors: {self.index.ntotal}")
+        print(f"[FAISS] Loaded index. Total vectors: {self.index.ntotal}", flush=True)
 
     def search(
         self,

@@ -12,6 +12,7 @@ import numpy as np
 from pathlib import Path
 from typing import List, Dict, Any
 from tqdm import tqdm
+# pyrefly: ignore [missing-import]
 from sentence_transformers import SentenceTransformer
 
 
@@ -25,10 +26,10 @@ class BGEEmbedder:
     PASSAGE_PREFIX = ""  # No prefix for passages/documents
 
     def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5", device: str = "cpu"):
-        print(f"[Embedder] Loading model: {model_name}")
+        print(f"[Embedder] Loading model: {model_name}", flush=True)
         self.model = SentenceTransformer(model_name, device=device)
         self.model_name = model_name
-        print("[Embedder] Model loaded successfully")
+        print("[Embedder] Model loaded successfully", flush=True)
 
     def embed_passages(self, texts: List[str], batch_size: int = 32) -> np.ndarray:
         """Embed document passages (no prefix needed for BGE passage encoding)."""
@@ -57,7 +58,7 @@ class BGEEmbedder:
         Returns chunks with 'embedding' field added.
         """
         texts = [c.get("chunk_text", "") for c in chunks]
-        print(f"[Embedder] Embedding {len(texts)} chunks...")
+        print(f"[Embedder] Embedding {len(texts)} chunks...", flush=True)
         embeddings = self.embed_passages(texts, batch_size=batch_size)
 
         enriched = []
@@ -67,7 +68,7 @@ class BGEEmbedder:
                 "embedding": emb.tolist(),
             })
 
-        print(f"[Embedder] Done. Embedding dim: {embeddings.shape[1]}")
+        print(f"[Embedder] Done. Embedding dim: {embeddings.shape[1]}", flush=True)
         return enriched
 
     @property

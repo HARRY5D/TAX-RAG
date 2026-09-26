@@ -71,7 +71,7 @@ class HybridRetriever:
     def _build_bm25(self) -> None:
         """Build BM25 index from the FAISS store's text corpus."""
         if self._bm25 is None:
-            print("[Retriever] Building BM25 index...")
+            print("[Retriever] Building BM25 index...", flush=True)
             corpus = self.faiss_store.texts
             tokenized = [_tokenize(t) for t in corpus]
             self._bm25 = BM25Okapi(tokenized)
@@ -79,7 +79,7 @@ class HybridRetriever:
                 {"text": t, "metadata": m, "index": i}
                 for i, (t, m) in enumerate(zip(self.faiss_store.texts, self.faiss_store.metadata))
             ]
-            print(f"[Retriever] BM25 index built on {len(corpus)} documents")
+            print(f"[Retriever] BM25 index built on {len(corpus)} documents", flush=True)
 
     def retrieve(
         self,

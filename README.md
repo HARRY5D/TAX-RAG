@@ -1,4 +1,4 @@
-# FinAssist AI 
+# FinAssist AI 💰
 
 **Intelligent Indian Tax Planning Assistant — FY 2025-26**
 
@@ -9,19 +9,19 @@ A hybrid financial intelligence system combining deterministic tax calculation, 
 ## Architecture
 
 ```
-       User (Streamlit)
-              │
-    LangGraph Orchestrator
-              │
-  ┌───────────┼───────────────────┐
-  ▼           ▼                   ▼
-Tax       RAG Engine            Form16 
-Engine  (FAISS+BM25+Reranker)   Parser
-  │           │                   │
-  └───────────┬───────────────────┘
-              ▼
-          Qwen model
-              ▼
+User (Streamlit)
+      │
+LangGraph Orchestrator
+      │
+  ┌───┼─────────────────┐
+  ▼   ▼                 ▼
+Tax  RAG Engine    Form16 Parser
+Engine (FAISS+BM25+Reranker)
+  │                     │
+  └─────────┬───────────┘
+            ▼
+        Gemini 1.5 Flash
+            ▼
       Final Answer + Citations
 ```
 

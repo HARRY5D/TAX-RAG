@@ -37,8 +37,9 @@ class BGEReranker:
 
         for m in models_to_try:
             try:
+                # pyrefly: ignore [missing-import]
                 from sentence_transformers import CrossEncoder
-                print(f"[Reranker] Loading cross-encoder: {m}")
+                print(f"[Reranker] Loading cross-encoder: {m}", flush=True)
 
                 # Explicitly pass device and trust_remote_code to avoid NoneType errors
                 reranker = CrossEncoder(
@@ -54,15 +55,15 @@ class BGEReranker:
                 self._available = True
                 self._model_name = m
                 self._mode = "crossencoder"
-                print(f"[Reranker] Cross-encoder loaded: {m}")
+                print(f"[Reranker] Cross-encoder loaded: {m}", flush=True)
                 return
 
             except Exception as e:
-                print(f"[Reranker] Warning: Could not load '{m}': {e}")
+                print(f"[Reranker] Warning: Could not load '{m}': {e}", flush=True)
                 continue
 
         # Final fallback: TF-IDF cosine similarity (zero external dependencies)
-        print("[Reranker] Using TF-IDF cosine similarity fallback (offline, always works).")
+        print("[Reranker] Using TF-IDF cosine similarity fallback (offline, always works).", flush=True)
         self._mode = "tfidf"
         self._available = True  # TF-IDF is always available
 
