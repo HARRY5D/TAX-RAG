@@ -1,7 +1,22 @@
 """
-LangGraph Orchestrator — central workflow graph for FinAssist AI (v4).
+LangGraph Orchestrator — HISTORICAL / FALLBACK PATH (FinAssist AI v4)
+======================================================================
+STATUS: PRESERVED — do NOT delete or modify this file.
 
-Fixed flow:
+This module implements the original sequential LangGraph DAG pipeline.
+It is kept for three reasons:
+  1. LangSmith tracing continuity — all past runs are visible under project
+     TAX_RAG and can be compared against the new Gemini Agent path.
+  2. Fallback path — tax_assistant.py falls back to run_query() here if the
+     Gemini Agent is unavailable (quota, bad key, network failure).
+  3. Ablation testing — run the same query on both paths in LangSmith and
+     compare context quality, latency, and answer faithfulness.
+
+NEW PRIMARY PATH (Phase 3+):
+    recommendation_engine.agent.run_agent()   ← Gemini tool-calling agent
+    recommendation_engine.tools               ← Tool registry (Phase 1)
+
+Fixed DAG flow (this file):
   detect_intent
       |
   [form16_parser?]      <- only if form16 uploaded
@@ -19,6 +34,7 @@ Fixed flow:
   END
 """
 from langgraph.graph import StateGraph, END
+
 from recommendation_engine.state import GraphState
 from recommendation_engine.nodes import (
     detect_intent_node,

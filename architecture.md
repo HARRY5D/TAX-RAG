@@ -1,18 +1,88 @@
 # FinAssist AI — Architecture Reference
 
-> **Living document.** Updated at the end of every session. Use this to resume work without re-reading the full codebase.
+> **Living document.** Updated across sessions. Contains the complete architectural blueprint, recent changelog, and the transition plan to the Gemini Agentic Tool-Calling & MCP architecture.
 
 ---
 
-## Project Purpose
+## Project Purpose & Vision
 
-An offline-first Indian Tax RAG assistant for FY 2025-26. Uses:
-- **Local LLM** (Qwen2.5-Coder:7b / DeepSeek-Coder:6.7b via Ollama) for natural language answers
-- **Deterministic Python Tax Engine** for all number computation (zero LLM math)
-- **FAISS + BGE** vector store for legal document retrieval
-- **LangGraph** for multi-node orchestration
-- **LangSmith** for tracing
-- **Gemini API** for post-hoc legal section verification
+FinAssist AI is an intelligent Indian Tax Assistant for FY 2025-26 (AY 2026-27). 
+
+### Core Tenets
+1. **Zero LLM Math (Deterministic Computation)**: All numerical calculations (tax slabs, deductions, 87A rebate, HRA, 80C/80D caps, 44ADA presumptive profit) are executed by pure, deterministic Python code.
+2. **Agentic Tool-Calling**: The LLM (Google Gemini) acts as an intelligent reasoning and orchestration agent that invokes specialized tools (RAG, Tax Engine, Form 16 Parser, Web Search) dynamically based on user intent.
+3. **Hybrid RAG Grounding**: Legal context is retrieved via dense BGE embeddings, FAISS vector search, BM25 keyword matching, and cross-encoder BGE reranking.
+4. **Full Observability & Tracing**: All agent decisions, tool invocations, and historical graph nodes are fully instrumented with **LangSmith**.
+5. **MCP & Modular Tool Interfaces**: Core modules are packaged as standardized tool interfaces ready for Model Context Protocol (MCP) servers and FastAPI/Streamlit integration.
+
+---
+
+## High-Level Architecture Comparison
+
+### Phase 1 & 2 (Historical): Sequential Pipeline & LangGraph DAG
+Earlier versions executed a predefined sequential DAG pipeline:
+```text
+User Query ──► detect_intent ──► maybe_parse_form16 ──► calculate_tax ──► optimize ──► retrieve_context ──► generate_answer (Ollama) ──► gemini_verify ──► Final Answer
+```
+*(Preserved and logged in `recommendation_engine/graph.py` for backward compatibility, ablation testing, and LangSmith historical evaluation).*
+
+### Phase 3 (Current & Active): Agentic Tool-Calling Architecture (Gemini Agent)
+In the modern architecture, Google Gemini acts as the central reasoning agent with direct function/tool-calling capabilities:
+
+```text
+                             User Query / Chat Message
+                                        │
+                                        ▼
+                               ┌─────────────────┐
+                               │  Gemini Agent   │
+                               │ (Function/Tool) │
+                               └────────┬────────┘
+                                        │
+                         Dynamically chooses tool(s)
+                                        │
+          ┌───────────────┬─────────────┴───────────────┬────────────────┐
+          ▼               ▼                             ▼                ▼
+┌──────────────────┐ ┌──────────────┐          ┌────────────────┐ ┌─────────────┐
+│retrieve_tax_docs │ │calculate_tax │          │analyze_form16  │ │web_search   │
+│  (Hybrid RAG)    │ │(Tax Engine)  │          │(Form16 Parser) │ │(Live Info)  │
+└────────┬─────────┘ └──────┬───────┘          └───────┬────────┘ └──────┬──────┘
+         │                  │                          │                 │
+    FAISS + BM25      Deterministic             PDF Extraction       Budget / IT
+    + BGE Rerank      Python Slabs              + OCR Fallback       Notifications
+         │                  │                          │                 │
+   Legal Chunks        Tax Output                  Tax Profile        Web Snippets
+         └──────────────────┼──────────────────────────┴─────────────────┘
+                            ▼
+                   ┌─────────────────┐
+                   │  Gemini Agent   │
+                   │ (Synthesizer)   │
+                   └────────┬────────┘
+                            │
+                            ▼
+                   Final Response to User
+```
+
+---
+
+## Where Model Context Protocol (MCP) Fits
+
+All internal engines are packaged as clean, modular tool interfaces that conform to standard tool calling and MCP server definitions:
+
+```text
+Gemini Agent / MCP Client
+    │
+    ├── retrieve_tax_docs(query, top_k) ──► Hybrid RAG (FAISS + BM25 + BGE Reranker)
+    ├── calculate_tax(profile_dict)     ──► Deterministic Python Tax Engine
+    ├── analyze_form16(pdf_path)        ──► Form 16 Part A/B Parser
+    ├── optimize_tax(profile_dict)      ──► Deduction Gap & Savings Engine
+    └── web_search(query)               ──► Live Tax Circulars & Finance News
+```
+
+### Component Roles & Guarantees
+- **`retrieve_tax_docs()`**: Retrieves authoritative legal clauses from curated tax markdown documents (`80C.md`, `80D.md`, `HRA.md`, `Presumptive_Taxation.md`, etc.).
+- **`calculate_tax()`**: Computes exact tax under Old and New regimes, 87A rebate, standard deductions, and cess. Guarantees mathematical precision.
+- **`analyze_form16()`**: Parses employer, PAN, gross salary, allowances, chapter VI-A deductions, and TDS directly from uploaded PDFs.
+- **`optimize_tax()`**: Analyzes unutilized capacities in 80C, 80CCD(1B), and 80D to suggest optimal investment avenues.
 
 ---
 
@@ -20,211 +90,184 @@ An offline-first Indian Tax RAG assistant for FY 2025-26. Uses:
 
 ```
 TAX_QA/
-├── architecture.md             ← THIS FILE (cross-session reference)
-├── .env                        ← Secrets (not committed)
-├── .env.example                ← Template for .env
-├── .gitignore
-├── requirements.txt
+├── architecture.md             ← THIS FILE (Living architecture & roadmap)
+├── .env                        ← Local secrets & API keys (Git ignored)
+├── .env.example                ← Environment template
+├── .gitignore                  ← Configured to exclude .env, faiss_index, pycache
+├── requirements.txt            ← Project dependencies
 │
 ├── config/
-│   ├── settings.py             ← Pydantic settings (loads .env)
-│   └── langsmith_config.py     ← LangSmith tracing setup
+│   ├── settings.py             ← Pydantic settings & environment validation
+│   └── langsmith_config.py     ← LangSmith tracing setup and client
 │
 ├── data/
-│   ├── raw/                    ← Source PDFs (Income Tax Act sections etc.)
-│   └── curated/                ← Hand-crafted markdown legal reference docs
+│   ├── raw/                    ← Source PDFs (Income Tax Act sections, circulars)
+│   └── curated/                ← Curated markdown tax rules (FY 2025-26)
 │       ├── 80C.md
 │       ├── 80D.md
 │       ├── HRA.md
 │       ├── Home_Loan.md
 │       ├── NPS.md
 │       ├── Old_vs_New_Regime.md
-│       ├── Presumptive_Taxation.md   ← Added Session 3 (Section 44ADA)
-│       └── Tax_Slabs.md
+│       ├── Presumptive_Taxation.md   ← Section 44ADA freelancer rules
+│       ├── Tax_Slabs.md              ← Salaried vs Freelancer tax slabs
+│       ├── ITR_Filing.md
+│       ├── ITR_Documents.md
+│       └── VDA_Crypto.md
 │
-├── preprocessing/              ← PDF → text chunk pipeline
-│   └── pdf/
+├── preprocessing/              ← PDF text & table extraction pipeline
+│   ├── digital_extractor.py    ← pdfplumber / PyPDF digital text extraction
+│   ├── ocr_extractor.py        ← pytesseract OCR fallback for scanned PDFs
+│   ├── pdf_detector.py         ← Scanned vs digital PDF detector
+│   └── section_detector.py     ← Regex & layout section boundary detector
 │
-├── chunking/                   ← Text splitting logic
+├── chunking/                   ← Semantic & structural chunking
+│   ├── semantic_chunker.py
+│   └── metadata_tagger.py
 │
 ├── embeddings/
-│   └── embedder.py             ← BGEEmbedder (BAAI/bge-small-en-v1.5, offline)
+│   └── embedder.py             ← BGEEmbedder (BAAI/bge-small-en-v1.5) with real-time log flush
 │
 ├── vectordb/
-│   └── faiss_store.py          ← FAISS index (load/save/search)
+│   ├── faiss_store.py          ← FAISS Vector Store manager (search, save, load)
+│   └── faiss_index/            ← Serialized index & metadata (git ignored)
 │
 ├── rag/
-│   ├── retriever.py            ← HybridRetriever (dense FAISS + BM25)
-│   ├── reranker.py             ← BGEReranker (BAAI/bge-reranker-base, offline)
-│   └── rag_chain.py            ← RAGChain class + TAX_SYSTEM_PROMPT
+│   ├── retriever.py            ← HybridRetriever (Dense FAISS + Sparse BM25)
+│   ├── reranker.py             ← BGEReranker (BAAI/bge-reranker-base)
+│   └── rag_chain.py            ← RAG prompt templates & citation extractors
 │
-├── tax_engine/                 ← DETERMINISTIC — ZERO LLM. Never hallucinate.
-│   ├── slabs.py                ← Old/New regime tax slab computation
+├── tax_engine/                 ← DETERMINISTIC PYTHON ENGINE (Zero LLM Math)
+│   ├── slabs.py                ← Old/New regime tax slabs & 87A rebate
 │   ├── hra.py                  ← HRA exemption (Sec 10(13A))
-│   ├── deductions.py           ← 80C, 80D, 80TTA limits and caps
-│   ├── nps.py                  ← NPS (80CCD1B, 80CCD2)
-│   ├── home_loan.py            ← Sec 24b interest, 80EEA first-time buyer
+│   ├── deductions.py           ← 80C, 80D, 80TTA/80TTB caps
+│   ├── nps.py                  ← NPS (80CCD(1), 80CCD(1B), 80CCD(2))
+│   ├── home_loan.py            ← Section 24(b) interest & 80EEA
+│   ├── rental.py               ← Rental income & 30% standard deduction
 │   ├── calculator.py           ← Master orchestrator: calculate_full_tax()
-│   └── tax_tools.py            ← [NEW Session 4] LangChain Tool wrappers
+│   └── tax_tools.py            ← Structured tool wrappers & JSON schemas
 │
 ├── optimization/
 │   └── optimizer.py            ← find_optimization_opportunities()
 │
 ├── form16_parser/
-│   └── parser.py               ← PDF Form16 extraction
+│   ├── parser.py               ← 19-field PDF Form 16 extraction
+│   └── schema.py               ← Form 16 Pydantic models
 │
-├── recommendation_engine/      ← LangGraph workflow
-│   ├── state.py                ← GraphState (Pydantic), all intermediate results
-│   ├── nodes.py                ← All LangGraph node functions
-│   ├── graph.py                ← Graph wiring + run_query() entry point
-│   └── gemini_verifier.py      ← [NEW Session 4] Gemini section verification
+├── recommendation_engine/      ← Orchestration & Agent Layer
+│   ├── agent.py                ← [NEW] Gemini Agent with dynamic tool calling
+│   ├── tools.py                ← [NEW] Unified LangChain / Gemini tool registry
+│   ├── state.py                ← GraphState (Pydantic state container)
+│   ├── nodes.py                ← LangGraph node functions (historical & fallback)
+│   ├── graph.py                ← LangGraph workflow definition (historical)
+│   └── gemini_verifier.py      ← Section citation verifier
+│
+├── sample_form16s/             ← Test Form 16 PDFs (Junior Dev, Senior Mgr, Fresher)
 │
 ├── api/                        ← FastAPI backend
 │   ├── main.py
 │   ├── schemas.py
 │   └── routes/
 │
-├── frontend/                   ← Streamlit UI
+├── frontend/                   ← Streamlit Multi-page App
+│   ├── app.py                  ← Main UI entrypoint & navigation
+│   ├── _pages/
+│   │   ├── dashboard.py        ← Financial overview & KPI cards
+│   │   ├── tax_calculator.py   ← Interactive tax simulator
+│   │   ├── tax_optimizer.py    ← Optimization engine & capacity charts
+│   │   ├── regime_comparator.py← Side-by-side Old vs New regime comparison
+│   │   ├── form16_analyzer.py  ← Form 16 upload, parsing, and auto-sync
+│   │   └── tax_assistant.py    ← Chat interface connected to Gemini Agent
+│   └── components/
+│       ├── cards.py            ← UI metric cards
+│       └── charts.py           ← Plotly breakdown charts & donuts
 │
-├── scripts/
-│   ├── build_index.py          ← Build FAISS index from chunks
-│   └── process_pdfs.py         ← PDF → chunks (with cache)
-│
-├── processed/                  ← Cached chunk JSON files
-└── vectordb/faiss_index/       ← Persisted FAISS index files
+└── scripts/
+    ├── build_index.py          ← Build FAISS index from chunks
+    ├── process_pdfs.py         ← Extract & chunk PDFs
+    └── ragas_eval.py           ← RAG evaluation metrics
 ```
 
 ---
 
-## LangGraph Workflow (Node Execution Order)
+## Key Design Decisions & Evolution
 
-```
-detect_intent
-    │
-    ├─[has form16]──► parse_form16 ─┐
-    │                               │
-    └─[no form16]──► maybe_calculate◄┘
-                         │
-              [has tax_profile]
-                         │
-                    calculate_tax          ← tax_engine/calculator.py
-                         │
-              [needs optimization]
-                         │
-                      optimize             ← optimization/optimizer.py
-                         │
-                   maybe_retrieve
-                         │
-              [needs retrieval = True]
-                         │
-                  retrieve_context         ← rag/retriever.py + reranker.py
-                         │
-                  generate_answer          ← Qwen/DeepSeek via Ollama
-                         │
-                  gemini_verify            ← [NEW] gemini_verifier.py
-                         │
-                        END
-```
+| Component | Historical Approach | New Agentic Approach | Rationale |
+|---|---|---|---|
+| **LLM Generation** | Local Ollama (Qwen2.5-Coder / DeepSeek) | Google Gemini 2.5 Flash / Pro | High speed, reliable tool calling / function calling, native JSON parsing, eliminating local GPU/RAM bottlenecks. |
+| **Tax Calculation** | Deterministic Python Engine | Deterministic Python Engine (as Tool) | Zero LLM math. LLM receives structured tax results via tool calls and explains them without recalculating. |
+| **Orchestration** | Hardcoded LangGraph DAG | Gemini Agent with Function Calling | Gemini dynamically decides whether to query RAG, calculate tax, parse Form 16, or search the web based on conversation context. |
+| **Observability** | LangSmith (LangGraph Tracing) | LangSmith (Agent & Tool Call Tracing) | Every step, tool invocation, token count, and latency is transparently tracked in LangSmith. |
+| **RAG Retrieval** | FAISS + BM25 + BGE Rerank | FAISS + BM25 + BGE Rerank (as Tool) | Preserves the high retrieval accuracy (96.7% context hit) without altering the curated knowledge base. |
+| **Form 16 Integration** | Manual button click | Automatic session-state propagation + Tool | Instantly fills tax calculator and optimizer upon upload; can also be parsed dynamically by the agent. |
 
 ---
 
-## Key Design Decisions
+## Anti-Hallucination & Math Protection Framework
 
-| Decision | Rationale |
-|---|---|
-| **Ollama local LLM, not Gemini for generation** | API key blocked by secret scanning on push; offline-first is more reliable for tax (no data leaves machine) |
-| **BGE embeddings, not FinLang/finance-embeddings-investopedia** | FinLang model requires HuggingFace online fetch; our offline constraint (`HF_HUB_OFFLINE=1`) would break it. BGE small is already cached and works offline. |
-| **Deterministic tax engine (no LLM math)** | LLMs hallucinate numbers. All tax math is pure Python with known slab tables. LLM only narrates the pre-computed result. |
-| **FAISS not ChromaDB/Weaviate** | Zero external server dependency; index fits in RAM for this dataset size. |
-| **No fine-tuning** | Tax laws change yearly — RAG with curated docs is updateable in seconds vs months of fine-tuning. |
-| **Presumptive Tax (Sec 44ADA) as freelancer flag** | `is_freelancer=True` in profile triggers 50% presumptive profit calculation before slab application. |
-| **Gemini for VERIFICATION only, not generation** | Local model has grounded RAG context but may cite wrong section numbers. Gemini (with its broader training) verifies section citations after-the-fact. |
-
----
-
-## Anti-Hallucination Architecture (Session 4 Enhancement)
-
-```
-User Query
-    │
-    ▼
-[detect_intent] → extracts income, is_freelancer, preferred_regime
-    │
-    ▼
-[calculate_tax] → Python tax engine → VERIFIED_TAX_DATA (dict)
-    │
-    ▼
-[rag_retrieve] → retrieves legal chunks → LEGAL_CONTEXT + CITATIONS
-    │
-    ▼
-[generate_answer] ← Prompt contains:
-    │                 1. REGIME LOCK (if user specified old/new)
-    │                 2. VERIFIED_TAX_DATA as JSON (LLM MUST use these numbers)
-    │                 3. LEGAL_CONTEXT from RAG
-    │                 4. LEGAL_SECTIONS_REFERENCED (section list for LLM to cite)
-    │                 5. Hard rules: no hallucination, no self-calculation
-    ▼
-[gemini_verify] ← checks section citations against Gemini's knowledge
-    │              appends ⚠️ corrections to final answer if wrong
-    ▼
-Final Answer to User
-```
+1. **Deterministic Authority**: The prompt explicitly enforces:
+   ```text
+   The numerical data provided by `calculate_tax` is authoritative and computed by a deterministic Python engine.
+   You are strictly FORBIDDEN from recalculating, adjusting, or generating new arithmetic figures.
+   ```
+2. **Strict Section Citations**: Citations must be derived exclusively from `retrieve_tax_docs` or verified against official Income Tax Act sections.
+3. **Regime Locking**: When a user specifies a target regime (Old or New), the agent adheres strictly to the chosen regime's slab limits and deduction eligibility.
+4. **Freelancer & Presumptive Taxation (Sec 44ADA)**: Automatically applies 50% presumptive profit calculation when freelance income is identified.
 
 ---
 
-## Strict Rules in Prompt (Session 4)
+## Implementation Plan: Transition to Gemini Agentic Tool Architecture
 
-1. **REGIME LOCK** — If user says "old regime" or "new regime", the prompt contains a hard lock. LLM must ONLY show that regime's numbers.
-2. **VERIFIED_TAX_DATA** — Full JSON from Python tax engine. LLM is told: *"These numbers are computed by a deterministic Python tax engine. You MUST use ONLY these numbers. If you calculate differently, you are WRONG."*
-3. **NO MATH** — LLM is forbidden from doing arithmetic or explaining slab breakdowns unless that specific breakdown is in LEGAL_CONTEXT.
-4. **SECTION CITATIONS ONLY FROM RAG** — LLM can only cite section numbers that appear in LEGAL_SECTIONS_REFERENCED.
-5. **FREELANCER RULE** — If `is_freelancer=True`, LLM must reference Section 44ADA and the 50% presumptive profit rule, not treat it as salary income.
+### Phase 1: Tool Interface Normalization & Registry
+- **Objective**: Standardize all existing engines (`rag/retriever.py`, `tax_engine/calculator.py`, `form16_parser/parser.py`, `optimization/optimizer.py`) into typed, annotated tool functions.
+- **Action Items**:
+  1. Create `recommendation_engine/tools.py` declaring tools with clear docstrings and Pydantic argument schemas:
+     - `retrieve_tax_docs(query: str, top_k: int = 5)`
+     - `calculate_tax_breakdown(gross_salary: float, basic_salary: float, ...)`
+     - `parse_form16_document(file_path: str)`
+     - `get_optimization_advice(gross_salary: float, current_80c: float, ...)`
+     - `web_search_tax_updates(query: str)`
+  2. Verify JSON schema generation for Gemini function declarations.
 
----
+### Phase 2: Gemini Agent Implementation with LangSmith Tracing
+- **Objective**: Build the Gemini Agent orchestrator that binds the tools and executes the tool-call loop.
+- **Action Items**:
+  1. Implement `recommendation_engine/agent.py` utilizing Google GenAI / LangChain Gemini integration.
+  2. Configure LangSmith callback handlers and tags for complete tracing.
+  3. Support multi-turn chat memory and session state context passing.
+  4. Retain `recommendation_engine/graph.py` and `recommendation_engine/nodes.py` with clear documentation for backward-compatible comparison.
 
-## Known Issues & Resolutions
+### Phase 3: Frontend & Chat Assistant Integration
+- **Objective**: Connect Streamlit `tax_assistant.py` to the new Gemini Agent.
+- **Action Items**:
+  1. Update `frontend/_pages/tax_assistant.py` to stream responses from the Gemini Agent.
+  2. Display interactive tool call badges (e.g., `[Called Tool: retrieve_tax_docs]`, `[Called Tool: calculate_tax]`) in the chat UI for enhanced transparency.
+  3. Ensure seamless handoff between Form 16 upload, Tax Calculator, and Tax Assistant via `st.session_state`.
 
-| Issue | Status | Resolution |
-|---|---|---|
-| `ChatPromptTemplate` not defined error | ✅ Fixed (Session 2) | Removed LangChain template dependency; use plain f-string prompts |
-| `RetrievedContext` has no attribute `.get` | ✅ Fixed (Session 2) | Use `state.rag_context.context` (attribute access, not `.get()`) |
-| Gemini API key blocked by GitHub secret scanning | ✅ Resolved | Key removed from code; stored only in `.env` which is git-ignored |
-| LLM citing wrong sections (194-I instead of 194J for freelancers) | ✅ Fixed (Session 4) | Curated `Presumptive_Taxation.md` updated; strict prompt exclusions added. |
-| LLM mixing standard deduction with presumptive profit | ✅ Fixed (Session 4) | Added explicit warning headers and separate tax tables in `Tax_Slabs.md` for Salaried vs Freelancers. |
-| Hypothetical income queries not running tax engine | ✅ Fixed (Session 4) | Enhanced query parsing to match "if I earn X" phrasings. |
-| LLM calculating non-zero tax for under 12L net income | ✅ Fixed (Session 4) | Added detailed Section 87A Rebate explanations and tables showing final ₹0 tax payable under the New Regime. |
+### Phase 4: Verification, Evaluation & Documentation
+- **Objective**: Validate end-to-end functionality against sample scenarios.
+- **Action Items**:
+  1. Test complex multi-intent queries (e.g., *"I earn 18 LPA, have 1.5L in EPF, and pay 30k rent. Which regime is better and what sections apply?"*).
+  2. Confirm tool invocation correctness in LangSmith traces.
+  3. Run RAG evaluation script (`scripts/ragas_eval.py`) to confirm zero regressions in context hit and faithfulness.
 
 ---
 
 ## Session Progress Log
 
-### Session 1 (2026-06-30)
-- Full project scaffold created
-- Tax engine implemented (all deduction modules)
-- PDF processing pipeline built
-- FAISS index built with curated docs
-- Streamlit UI created
-- LangSmith tracing connected
+### Session 1 to 3
+- Full project scaffold, tax engine modules, FAISS vector store, Streamlit UI, and initial LangSmith tracing.
+- Presumptive taxation (Section 44ADA) added with curated legal docs.
 
-### Session 2 (2026-07-10)
-- Switched from Gemini to Ollama (qwen2.5-coder:7b primary, deepseek-coder:6.7b fallback)
-- Fixed `ChatPromptTemplate` and `RetrievedContext.get()` bugs
-- LangSmith confirmed working with local model
+### Session 4
+- Implemented structured tax engine tool wrappers in `tax_tools.py`.
+- Gemini verifier node added for post-hoc citation checks.
+- Enhanced query parsing for hypothetical income scenarios.
 
-### Session 3 (2026-07-11)
-- Added `Presumptive_Taxation.md` curated doc (Section 44ADA)
-- `calculator.py` updated with `is_freelancer` flag + 50% presumptive profit logic
-- `_extract_income_from_query()` detects freelance keywords
-- Stricter system prompts added
-- RAG index rebuilt
-
-### Session 4 (2026-07-13) ← CURRENT
-- Created `architecture.md` living documentation reference
-- Implemented structured tax engine tool wrappers in `tax_tools.py`
-- Implemented `GeminiVerifier` post-answer section checker in `gemini_verifier.py`
-- Wired `gemini_verify_node` into LangGraph execution flow in `graph.py`
-- Added strict regime locks and structured prompt inputs to prevent hallucinations
-- Enhanced query parser to handle hypothetical phrasing ("if I earn X")
-- Separated salaried vs freelancer estimates in `Tax_Slabs.md` to prevent RAG context confusion
-- Detailed Section 87A Rebate calculations showing ₹0 tax up to ₹24L gross receipts under Section 44ADA
-- Processed updated documents into RAG cache
+### Session 5
+- **Form 16 Auto-Propagation**: Form 16 upload now automatically populates session state tax profiles.
+- **Tax Optimizer Numeric Safety**: Implemented `_ss_int()` helper to eliminate `StreamlitMixedNumericTypesError`.
+- **Diagnostic Logging**: Added `flush=True` across FAISS store, BGE embedder, retriever, and reranker.
+- **Sample Test Suite**: Generated 3 realistic Form 16 test PDFs (`sample_form16s/`).
+- **Repository Hygiene**: Pushed cleaned codebase to `https://github.com/HARRY5D/TAX-RAG.git` with `.env` and pycache exclusions.
+- **Agentic Architecture Blueprint**: Updated `architecture.md` outlining the Gemini Agent Tool-Calling transition plan.

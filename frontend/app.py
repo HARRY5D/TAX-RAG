@@ -126,6 +126,13 @@ html, body, [class*="css"] {
     font-weight: 600;
     margin-bottom: 6px;
 }
+.chat-body p { margin-top: 0; margin-bottom: 8px; line-height: 1.55; }
+.chat-body p:last-child { margin-bottom: 0; }
+.chat-body ul, .chat-body ol { margin-top: 4px; margin-bottom: 8px; padding-left: 20px; }
+.chat-body li { margin-bottom: 4px; }
+.chat-body table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
+.chat-body th, .chat-body td { border: 1px solid rgba(255,255,255,0.1); padding: 6px 10px; }
+.chat-body th { background: rgba(255,255,255,0.05); }
 
 /*  Section Headers  */
 .section-header {
@@ -215,10 +222,10 @@ with st.sidebar:
     <div style="padding:10px; background:rgba(78,205,196,0.1); border-radius:8px; border:1px solid rgba(78,205,196,0.2);">
         <p style="color:#8B949E; font-size:11px; margin:0;">
         <b style="color:#4ECDC4;">⚡ Powered by</b><br>
-        • Qwen2.5-Coder (Ollama)<br>
+        • Google Gemini Flash<br>
         • BGE Embeddings<br>
         • FAISS + BM25 Hybrid<br>
-        • LangGraph Orchestration
+        • Dynamic Agentic Graph
         </p>
     </div>
     """, unsafe_allow_html=True)

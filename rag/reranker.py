@@ -135,6 +135,8 @@ class BGEReranker:
         if not candidates:
             return []
 
+        top_k = int(top_k)  # guard against float top_k from Gemini JSON
+
         # TF-IDF fallback mode
         if self._mode == "tfidf":
             return self._tfidf_rerank(query, candidates, top_k)

@@ -36,10 +36,14 @@ class Settings(BaseSettings):
     app_version: str = Field(default="1.0.0")
     debug: bool = Field(default=False)
 
-    # Google / Gemini (Section Verifier — Google AI Studio key)
+    # Google / Gemini — used for both agent generation AND section verification
     gemini_api_key: str = Field(default="")
-    gemini_model: str = Field(default="gemini-1.5-flash")          # primary: 1500 req/day free tier
-    gemini_fallback_model: str = Field(default="gemini-1.5-flash-8b")  # fallback: high free-tier quota
+    google_api_key: str = Field(default="")               # alias accepted by some SDKs
+    google_cse_api_key: str = Field(default="")           # Google Custom Search Engine API key
+    google_cse_id: str = Field(default="")                # Custom Search Engine ID (cx parameter)
+    gemini_model: str = Field(default="gemini-3.8-flash")       # primary model for agent
+    gemini_fallback_model: str = Field(default="gemini-2.0-flash-lite")  # fallback on quota
+    llm_model: str = Field(default="gemini-3.8-flash")           # .env: LLM_MODEL (agentic path)
     gemini_verify_enabled: bool = Field(default=True)
 
     # LangSmith
